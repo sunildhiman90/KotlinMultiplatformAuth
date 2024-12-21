@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "KotlinMultiplatformAuth"
-include(":library")
+include(":kmauth-firebase")

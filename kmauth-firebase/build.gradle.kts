@@ -8,8 +8,8 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "io.github.kotlin"
-version = "1.0.0"
+group = "io.github.sunildhiman90"
+version = "0.0.1"
 
 kotlin {
     jvm()
@@ -40,7 +40,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.jetbrains.kotlinx.multiplatform.library.template"
+    namespace = "com.sunildhiman90.kmauth.firebase"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -52,31 +52,30 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates(group.toString(), "library", version.toString())
+    coordinates(group.toString(), "kmauth-firebase", version.toString())
 
     pom {
-        name = "My library"
-        description = "A library."
+        name = "KotlinMultiplatformAuth"
+        description = "Kotlin Multiplatform Authentication Librar targetting all platforms."
         inceptionYear = "2024"
-        url = "https://github.com/kotlin/multiplatform-library-template/"
+        url = "https://github.com/sunildhiman90/KotlinMultiplatformAuth/"
         licenses {
             license {
-                name = "XXX"
-                url = "YYY"
-                distribution = "ZZZ"
+                name = "Apache-2.0"
+                url = "https://opensource.org/licenses/Apache-2.0"
             }
         }
         developers {
             developer {
-                id = "XXX"
-                name = "YYY"
-                url = "ZZZ"
+                id = "sunildhiman90"
+                name = "Sunil Kumar"
+                url = "https://github.com/sunildhiman90"
             }
         }
         scm {
-            url = "XXX"
-            connection = "YYY"
-            developerConnection = "ZZZ"
+            url = "https://github.com/sunildhiman90/KotlinMultiplatformAuth"
+            connection = "https://github.com/sunildhiman90/KotlinMultiplatformAuth.git"
+            developerConnection = "https://github.com/sunildhiman90"
         }
     }
 }

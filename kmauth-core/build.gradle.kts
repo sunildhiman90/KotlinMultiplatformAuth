@@ -22,7 +22,6 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    linuxX64()
 
     js(IR) {
         nodejs()
@@ -33,7 +32,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                //put your multiplatform dependencies here
+                //Kermit
+                implementation(libs.kermit)
             }
         }
         val commonTest by getting {

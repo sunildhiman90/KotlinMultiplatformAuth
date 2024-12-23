@@ -32,9 +32,20 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                //put your multiplatform dependencies here
+
+                implementation(projects.kmauthCore)
             }
         }
+
+        androidMain.dependencies {
+
+            //for android google sign in using CredentialManager
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services.auth)
+            implementation(libs.googleid)
+
+        }
+
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
@@ -44,7 +55,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.sunildhiman90.kmauth.firebase"
+    namespace = "com.sunildhiman90.kmauth.google"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")

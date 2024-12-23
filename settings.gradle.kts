@@ -18,6 +18,7 @@ rootProject.name = "KotlinMultiplatformAuth"
 include(":kmauth-core")
 include(":kmauth-firebase")
 include(":kmauth-google")
+include(":sample:composeApp")
 
 //For using library preview in sample
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

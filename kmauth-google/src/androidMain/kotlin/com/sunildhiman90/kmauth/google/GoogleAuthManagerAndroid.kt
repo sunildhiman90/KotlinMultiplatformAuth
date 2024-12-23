@@ -1,4 +1,5 @@
 package com.sunildhiman90.kmauth.google
+
 import android.content.Context
 import android.util.Log
 import androidx.credentials.ClearCredentialStateRequest
@@ -26,11 +27,17 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         kmAuthPlatformContext = KMAuthInitializer.getKMAuthPlatformContext()
 
         require(kmAuthPlatformContext?.context != null) {
-            "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::init"
+            val message =
+                "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::init"
+            Log.e(TAG, message)
+            message
         }
 
         require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
-            "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
+            val message =
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
+            Log.e(TAG, message)
+            message
         }
 
         webClientId = KMAuthInitializer.getWebClientId()!!
@@ -100,14 +107,14 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
                     }
                 } else {
                     // Catch any unrecognized custom credential type here.
-                    Log.e(TAG,"Unexpected type of credential")
+                    Log.e(TAG, "Unexpected type of credential")
                     null
                 }
             }
 
             else -> {
                 // Catch any unrecognized credential type here.
-                Log.e(TAG,"Unexpected type of credential")
+                Log.e(TAG, "Unexpected type of credential")
                 null
             }
         }
@@ -117,11 +124,11 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
         } catch (e: Exception) {
-            Log.e(TAG,"google signOut failed: $e")
+            Log.e(TAG, "google signOut failed: $e")
         }
     }
 
     companion object {
-        private const val TAG = "GoogleAuthManagerAndroid"
+        private const val TAG = "KotlinMultiplatformAuth"
     }
 }

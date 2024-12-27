@@ -1,8 +1,9 @@
 package com.sunildhiman90.kmauth.core
 
 data class KMAuthUser(
-    val id: String,
-    val idToken: String,
+    var id: String,
+    val idToken: String? = null,
+    val accessToken: String? = null,
     val name: String? = null,
     val email: String? = null,
     val phoneNumber: String? = null,

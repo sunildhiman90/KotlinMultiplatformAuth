@@ -29,14 +29,14 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         require(kmAuthPlatformContext?.context != null) {
             val message =
                 "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::init"
-            Log.e(TAG, message)
+            co.touchlab.kermit.Logger.withTag(TAG).e(message)
             message
         }
 
         require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
             val message =
                 "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
-            Log.e(TAG, message)
+            co.touchlab.kermit.Logger.withTag(TAG).e(message)
             message
         }
 
@@ -46,9 +46,8 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
 
     }
 
-    override suspend fun signIn(): KMAuthUser? {
+    override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
         try {
-
 
             // For popup view, we can use GetSignInWithGoogleOption, Otherwise we can GetGoogleIdOption for bottom sheet
             // set setFilterByAuthorizedAccounts to false, Otherwise it will not show any account first time
@@ -70,11 +69,11 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
                 context = context,
                 request = request
             )
-            return handleSignIn(result)
+            onSignResult(handleSignIn(result), null)
         } catch (e: Exception) {
             e.printStackTrace()
-            Log.e(TAG, "signIn failed: $e")
-            return null
+            co.touchlab.kermit.Logger.withTag(TAG).e("google signIn failed: $e")
+            onSignResult(null, e)
         }
 
     }
@@ -102,19 +101,19 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
                             profilePicUrl = googleIdTokenCredential.profilePictureUri.toString()
                         )
                     } catch (e: GoogleIdTokenParsingException) {
-                        Log.e(TAG, "Received an invalid google id token response: $e")
+                        co.touchlab.kermit.Logger.withTag(TAG).e("Received an invalid google id token response: $e")
                         null
                     }
                 } else {
                     // Catch any unrecognized custom credential type here.
-                    Log.e(TAG, "Unexpected type of credential")
+                    co.touchlab.kermit.Logger.withTag(TAG).e( "Unexpected type of credential")
                     null
                 }
             }
 
             else -> {
                 // Catch any unrecognized credential type here.
-                Log.e(TAG, "Unexpected type of credential")
+                co.touchlab.kermit.Logger.withTag(TAG).e("Unexpected type of credential")
                 null
             }
         }
@@ -124,11 +123,11 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
         } catch (e: Exception) {
-            Log.e(TAG, "google signOut failed: $e")
+            co.touchlab.kermit.Logger.withTag(TAG).e { "Exception in google signOut failed: $e" }
         }
     }
 
     companion object {
-        private const val TAG = "KotlinMultiplatformAuth"
+        private const val TAG = "GoogleAuthManagerAndroid"
     }
 }

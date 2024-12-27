@@ -4,6 +4,6 @@ import com.sunildhiman90.kmauth.core.KMAuthUser
 
 
 interface GoogleAuthManager {
-    suspend fun signIn(): KMAuthUser?
+    suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit)
     suspend fun signOut()
 }

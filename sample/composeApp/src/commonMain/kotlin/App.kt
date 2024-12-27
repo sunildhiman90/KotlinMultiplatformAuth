@@ -14,17 +14,24 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun App() {
+
     MaterialTheme {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
 
-            //Ideally you will be using it from ViewModel
+            //Ideally you will be using it from ViewModel or Repo
             val googleAuthManager = KMAuthGoogle.getGoogleAuthManager()
 
             val scope = rememberCoroutineScope()
             Button(onClick = {
                 scope.launch {
-                    val user = googleAuthManager.signIn()
-                    println("user: ${user?.toString()}")
+                    googleAuthManager.signIn { user, error ->
+                        if (error != null) {
+                            println("Error in google Sign In: $error" )
+                        }
+                        if (user != null) {
+                            println("Login Successful user: $user")
+                        }
+                    }
                 }
             }) {
                 Text("Google Sign In")

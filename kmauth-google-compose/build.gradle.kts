@@ -3,8 +3,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinCocoapods)
     id("module.publication")
 }
 
@@ -20,30 +21,9 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
-
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {}
-
-    cocoapods {
-        ios.deploymentTarget = "13.0"
-
-        framework {
-            // Required properties
-            // Framework name configuration. Use this property instead of deprecated 'frameworkName'
-            baseName = "kmauth_google"
-
-            // Optional properties
-            // Specify the framework linking type. It's dynamic by default.
-            isStatic = true
-        }
-
-        //We can use this library in iosMain,
-        // Also we need to add GoogleSignIn in ios xcode project iosApp either by cocoapods or spm
-        pod("GoogleSignIn")
-    }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     js(IR) {
         nodejs()
@@ -54,29 +34,24 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(projects.kmauthCore)
+
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
+
+                api(project(":kmauth-google"))
             }
         }
 
-        androidMain.dependencies {
 
-            //for android google sign in using CredentialManager
-            implementation(libs.androidx.credentials)
-            implementation(libs.androidx.credentials.play.services.auth)
-            implementation(libs.googleid)
-
-        }
-
-        val commonTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test)
-            }
-        }
     }
 }
 
 android {
-    namespace = "com.sunildhiman90.kmauth.google"
+    namespace = "com.sunildhiman90.kmauth.google.compose"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")

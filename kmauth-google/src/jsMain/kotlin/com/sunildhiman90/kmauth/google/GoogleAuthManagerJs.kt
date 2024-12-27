@@ -5,7 +5,7 @@ import com.sunildhiman90.kmauth.core.KMAuthUser
 internal class GoogleAuthManagerJs : GoogleAuthManager {
 
 
-    override suspend fun signIn(): KMAuthUser? {
+    override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
         TODO("Not yet implemented")
     }
 

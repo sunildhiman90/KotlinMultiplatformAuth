@@ -15,10 +15,13 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "KotlinMultiplatformAuth"
-include(":kmauth-core")
-include(":kmauth-firebase")
-include(":kmauth-google")
-include(":sample:composeApp")
+include(
+    ":kmauth-core",
+    ":kmauth-firebase",
+    ":kmauth-google",
+    ":kmauth-google-compose",
+    ":sample:composeApp"
+)
 
-//For using library preview in sample
+//type safe project accessors
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

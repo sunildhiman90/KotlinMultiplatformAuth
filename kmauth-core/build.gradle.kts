@@ -33,7 +33,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 //Kermit
-                implementation(libs.kermit)
+                api(libs.kermit)
             }
         }
         val commonTest by getting {

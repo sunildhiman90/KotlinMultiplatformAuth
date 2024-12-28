@@ -153,7 +153,8 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
                     config = json(
                         "client_id" to clientId,
                         "ux_mode" to "popup",
-                        "callback" to callbackFunction
+                        "callback" to callbackFunction,
+                        "use_fedcm_for_prompt" to true
                     )
                 )
 
@@ -179,7 +180,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         console.log("onClick promptGoogleSignIn:")
         google.accounts.id.prompt { response: dynamic ->
             val notification = response as google.accounts.id.PromptMomentNotification
-            if (notification.isNotDisplayed() == true || notification.isSkippedMoment() == true) {
+            if (notification.isSkippedMoment() == true) {
                 console.log("promptGoogleSignIn callback_isNotDisplayed_or_isSkipped:")
                 //trigger rendered button click
                 document.getElementById(GOOGLE_BUTTON_ID)
@@ -189,6 +190,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
                     )
             }
             if (notification.isDismissedMoment() == true) {
+                //if "credential_returned", it means user has already signed in successfully
                 console.log("promptGoogleSignIn callback_dismissed_reason: ${notification.getDismissedReason()}")
             }
         }

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sunildhiman90.kmauth.core.KMAuthUser
+import com.sunildhiman90.kmauth.google.GoogleAuthManager
 import com.sunildhiman90.kmauth.google.KMAuthGoogle
 import io.github.sunildhiman90.kmauth_google_compose.generated.resources.Res
 import io.github.sunildhiman90.kmauth_google_compose.generated.resources.google_icon
@@ -34,7 +35,7 @@ fun GoogleSignInButton(
     onSignInResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
 ) {
 
-    val googleAuthManager = remember { KMAuthGoogle.getGoogleAuthManager() }
+    val googleAuthManager = rememberGoogleAuthManager()
     val scope = rememberCoroutineScope()
 
     val onClick: () -> Unit = {
@@ -42,10 +43,10 @@ fun GoogleSignInButton(
             googleAuthManager.signIn { user, error ->
                 onSignInResult?.invoke(user, error)
                 if (error != null) {
-                    println("GoogleSignInButton: Error in google Sign In: $error" )
+                    println("GoogleSignInButton: Error in google Sign In: $error")
                 }
                 if (user != null) {
-                    println("GoogleSignInButton: Login Successful user: $user" )
+                    println("GoogleSignInButton: Login Successful")
                 }
             }
         }
@@ -76,5 +77,13 @@ fun GoogleSignInButton(
                 style = MaterialTheme.typography.bodySmall
             )
         }
+    }
+}
+
+
+@Composable
+fun rememberGoogleAuthManager(): GoogleAuthManager {
+    return remember {
+        KMAuthGoogle.getGoogleAuthManager()
     }
 }

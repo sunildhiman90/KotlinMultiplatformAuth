@@ -25,14 +25,12 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
     init {
 
         kmAuthPlatformContext = KMAuthInitializer.getKMAuthPlatformContext()
-
         require(kmAuthPlatformContext?.context != null) {
             val message =
                 "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::init"
             co.touchlab.kermit.Logger.withTag(TAG).e(message)
             message
         }
-
         require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
             val message =
                 "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"

@@ -1,3 +1,4 @@
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.include
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -49,6 +50,7 @@ kotlin {
         nodejs()
         browser()
         binaries.library()
+        binaries.executable()
     }
 
     sourceSets {
@@ -74,6 +76,8 @@ kotlin {
         }
     }
 }
+
+
 
 android {
     namespace = "com.sunildhiman90.kmauth.google"

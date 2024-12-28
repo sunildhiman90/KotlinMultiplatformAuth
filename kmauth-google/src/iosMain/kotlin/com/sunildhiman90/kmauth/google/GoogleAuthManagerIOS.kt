@@ -16,7 +16,6 @@ const val PROFILE_PIC_SIZE: ULong = 350u
 internal class GoogleAuthManagerIOS : GoogleAuthManager {
 
     override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
-
         try {
             val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
             requireNotNull(rootViewController) { "Root view controller is null" }

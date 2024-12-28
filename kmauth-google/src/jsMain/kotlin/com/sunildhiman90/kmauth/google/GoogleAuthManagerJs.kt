@@ -4,7 +4,6 @@ import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthUser
 import kotlinx.browser.document
 import kotlinx.browser.window
-import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLScriptElement
 import org.w3c.dom.events.Event
@@ -20,7 +19,7 @@ external object google {
         object id {
             fun initialize(config: dynamic)
             fun renderButton(element: dynamic, options: dynamic)
-            fun prompt(callback: (response: dynamic) -> Unit)
+            fun prompt(callback: (response: PromptMomentNotification) -> Unit)
             fun disableAutoSelect()
 
             object PromptMomentNotification {
@@ -44,7 +43,6 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
     private var isLibraryLoaded: Boolean = false
     private var isGoogleClientInitialized: Boolean = false
     private var webClientId: String
-    //private val google: dynamic get() = window.asDynamic().google
 
     private var onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
 
@@ -65,12 +63,11 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             initializeGoogleSignIn(
                 webClientId,
                 onError = {
-                    console.log("initializeGoogleSignIn: onError")
+                    console.info("initializeGoogleSignIn: onError")
                     onSignResult?.invoke(null, Exception("Google sign in failed"))
                 },
                 onSuccess = { credential ->
-                    console.log("initializeGoogleSignIn: onSuccess: $credential")
-
+                    console.info("initializeGoogleSignIn: onSuccess")
                     // Decode the JWT token to get the user's information
                     val userInfo = decodeJwtPayload(credential as String)
 
@@ -134,8 +131,8 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
             try {
 
-                val callbackFunction = { response: dynamic ->
-                    console.log("initializeGoogleSignIn: callbackFunction: $response")
+                val callbackFunction: (dynamic) -> Unit = { response: dynamic ->
+                    console.log("initializeGoogleSignIn: callbackFunction")
                     isGoogleClientInitialized = true
 
                     // Get the credential (JWT token) from the response,
@@ -177,11 +174,10 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
     }
 
     private fun promptGoogleSignIn() {
-        console.log("onClick promptGoogleSignIn:")
-        google.accounts.id.prompt { response: dynamic ->
-            val notification = response as google.accounts.id.PromptMomentNotification
+        console.log("promptGoogleSignIn:")
+        google.accounts.id.prompt { notification: google.accounts.id.PromptMomentNotification ->
             if (notification.isSkippedMoment() == true) {
-                console.log("promptGoogleSignIn callback_isNotDisplayed_or_isSkipped:")
+                console.info("promptGoogleSignIn one tap isNotDisplayed_or_isSkipped:")
                 //trigger rendered button click
                 document.getElementById(GOOGLE_BUTTON_ID)
                     ?.querySelector("div[role='button']")
@@ -191,7 +187,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             }
             if (notification.isDismissedMoment() == true) {
                 //if "credential_returned", it means user has already signed in successfully
-                console.log("promptGoogleSignIn callback_dismissed_reason: ${notification.getDismissedReason()}")
+                console.info("promptGoogleSignIn callback dismissed_reason: ${notification.getDismissedReason()}")
             }
         }
     }

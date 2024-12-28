@@ -13,10 +13,17 @@ object KMAuthInitializer {
     }
 
     /**
-     * This method can be used for Android platform for initialization of KMAuthPlatformContext.
+     * This method can be used for webClientId and Android platform for initialization of KMAuthPlatformContext.
      */
     fun initWithContext(webClientId: String, kmAuthPlatformContext: KMAuthPlatformContext) {
         this.webClientId = webClientId
+        this.kmAuthPlatformContext = kmAuthPlatformContext
+    }
+
+    /**
+     * This method can be used for Android platform for initialization of KMAuthPlatformContext.
+     */
+    fun initContext(kmAuthPlatformContext: KMAuthPlatformContext) {
         this.kmAuthPlatformContext = kmAuthPlatformContext
     }
 

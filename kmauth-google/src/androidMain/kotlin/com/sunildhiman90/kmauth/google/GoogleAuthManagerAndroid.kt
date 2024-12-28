@@ -3,11 +3,15 @@ package com.sunildhiman90.kmauth.google
 import android.content.Context
 import android.util.Log
 import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
+import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
@@ -55,25 +59,38 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
                 .setAutoSelectEnabled(false)
                 .build()
 
-            /*val getSignInWithGoogleOption: GetSignInWithGoogleOption = GetSignInWithGoogleOption.Builder(webClientId)
-                .build()*/
+            // User have signed in with some account, shop one tap bottom sheet
+            triggerSignIn(googleIdOption, onSignResult)
 
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
-
-            // Use an activity-based context to avoid undefined system UI launching behavior.
-            val result: GetCredentialResponse = credentialManager.getCredential(
-                context = context,
-                request = request
-            )
-            onSignResult(handleSignIn(result), null)
         } catch (e: Exception) {
             e.printStackTrace()
             co.touchlab.kermit.Logger.withTag(TAG).e("google signIn failed: $e")
-            onSignResult(null, e)
+            if (e is NoCredentialException) {
+                // User has not signed in yet with any account, shop popup Google Sign In
+                val getSignInWithGoogleOption: GetSignInWithGoogleOption = GetSignInWithGoogleOption.Builder(webClientId)
+                    .build()
+                triggerSignIn(getSignInWithGoogleOption, onSignResult)
+            } else {
+                onSignResult(null, e)
+            }
         }
 
+    }
+
+    private suspend fun triggerSignIn(
+        credentialOption: CredentialOption,
+        onSignResult: (KMAuthUser?, Throwable?) -> Unit
+    ) {
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(credentialOption)
+            .build()
+
+        // Use an activity-based context to avoid undefined system UI launching behavior.
+        val result: GetCredentialResponse = credentialManager.getCredential(
+            context = context,
+            request = request
+        )
+        onSignResult(handleSignIn(result), null)
     }
 
     private fun handleSignIn(result: GetCredentialResponse): KMAuthUser? {

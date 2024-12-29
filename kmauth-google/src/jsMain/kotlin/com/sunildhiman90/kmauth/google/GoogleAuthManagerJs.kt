@@ -243,7 +243,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         promptGoogleSignIn()
     }
 
-    override suspend fun signOut() {
+    override suspend fun signOut(userId: String?) {
         google.accounts.id.disableAutoSelect()
     }
 

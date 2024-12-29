@@ -134,7 +134,7 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         }
     }
 
-    override suspend fun signOut() {
+    override suspend fun signOut(userId: String?) {
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
         } catch (e: Exception) {

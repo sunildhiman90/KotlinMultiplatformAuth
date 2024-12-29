@@ -61,12 +61,27 @@ kotlin {
         }
 
         androidMain.dependencies {
-
             //for android google sign in using CredentialManager
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services.auth)
             implementation(libs.googleid)
+        }
 
+        jvmMain.dependencies {
+
+            //google sign in
+            implementation(libs.google.api.client)
+            implementation(libs.google.oauth.client)
+            implementation(libs.google.http.client.gson)
+
+            // Ktor for HTTP server
+            implementation(libs.ktor.server.core)
+            implementation(libs.ktor.server.netty)
+            implementation(libs.ktor.server.content.negotiation)
+
+            // Kotlinx Serialization
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.serialization.json)
         }
 
         val commonTest by getting {

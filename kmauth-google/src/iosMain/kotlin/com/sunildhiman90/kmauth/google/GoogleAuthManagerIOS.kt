@@ -54,7 +54,7 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
         }
     }
 
-    override suspend fun signOut() {
+    override suspend fun signOut(userId: String?) {
         try {
             GIDSignIn.sharedInstance.signOut()
         } catch (e: Exception) {

@@ -127,7 +127,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                             Logger.d("Authentication successful.")
                             // Send response back to the client
                             call.respondText(
-                                "Authentication successful. You can close this window adn return to the app",
+                                "Authentication successful. You can close this window and return to the app",
                                 ContentType.Text.Plain,
                                 HttpStatusCode.OK
                             )

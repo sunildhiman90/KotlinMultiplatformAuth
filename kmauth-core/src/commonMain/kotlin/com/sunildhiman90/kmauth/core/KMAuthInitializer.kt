@@ -17,7 +17,9 @@ object KMAuthInitializer {
      */
     fun init(webClientId: String, clientSecret: String? = null) {
         this.webClientId = webClientId
-        this.clientSecret = clientSecret
+        clientSecret?.let {
+            this.clientSecret = clientSecret
+        }
     }
 
     /**

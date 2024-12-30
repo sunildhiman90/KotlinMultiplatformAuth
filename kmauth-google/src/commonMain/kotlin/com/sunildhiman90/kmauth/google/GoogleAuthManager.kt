@@ -4,6 +4,10 @@ import com.sunildhiman90.kmauth.core.KMAuthUser
 
 
 interface GoogleAuthManager {
+
+    /**
+     * Sign in the user
+     */
     suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit)
 
     /**
@@ -12,4 +16,5 @@ interface GoogleAuthManager {
      * and for that it requires userId
      */
     suspend fun signOut(userId: String? = null)
+
 }

@@ -26,7 +26,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import sun.jvm.hotspot.debugger.win32.coff.DebugVC50X86RegisterEnums.TAG
 import java.awt.Desktop
 import java.io.File
 import java.net.URI
@@ -61,7 +60,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
         require(!KMAuthInitializer.getClientSecret().isNullOrEmpty()) {
             val message =
-                "clientSecret should not be null or empty, Please set it in KMAuthInitializer::init"
+                "clientSecret should not be null or empty, Please set it in KMAuthInitializer::init or KMAuthInitializer::initClientSecret"
             Logger.withTag(TAG).e(message)
             message
         }
@@ -224,8 +223,6 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
         } catch (e: Exception) {
             Logger.d("Failed to revoke token: ${e.message}")
             false
-        } finally {
-            client.close()
         }
     }
 

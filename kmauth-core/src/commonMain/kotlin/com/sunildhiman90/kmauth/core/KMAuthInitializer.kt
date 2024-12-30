@@ -1,5 +1,8 @@
 package com.sunildhiman90.kmauth.core
 
+/**
+ * This class is used for initialization of KotlinMultiplatformAuth.
+ */
 object KMAuthInitializer {
 
     private var webClientId: String? = null
@@ -8,10 +11,21 @@ object KMAuthInitializer {
 
     /**
      * This method can be used for all platforms for initialization of webClientId.
-     * clientSecret is optional, it will be used only for jvm
+     * clientSecret is optional for other platforms except jvm, it will be used only for jvm.
+     * If we don't want to call this method from each platform, we can call initClientSecret(clientSecret: String) method
+     * from jvm source set and KMAuthInitializer.init(webClientId: String) from composable for all platforms.
      */
     fun init(webClientId: String, clientSecret: String? = null) {
         this.webClientId = webClientId
+        this.clientSecret = clientSecret
+    }
+
+    /**
+     * This method will be used for jvm platform for initialization of clientSecret.
+     * If we don't want to call [KMAuthInitializer.init(webClientId: String, clientSecret: String?)] from each platform,
+     * we can call this method from jvm source set and KMAuthInitializer.init(webClientId: String) from composable for all platforms.
+     */
+    fun initClientSecret(clientSecret: String) {
         this.clientSecret = clientSecret
     }
 

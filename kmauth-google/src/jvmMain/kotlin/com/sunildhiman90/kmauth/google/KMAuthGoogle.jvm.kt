@@ -1,5 +1,6 @@
 package com.sunildhiman90.kmauth.google
 
 actual object KMAuthGoogle {
-    actual fun getGoogleAuthManager(): GoogleAuthManager = GoogleAuthManagerJvm()
+    actual val googleAuthManager: GoogleAuthManager
+        get() = GoogleAuthManagerJvm()
 }

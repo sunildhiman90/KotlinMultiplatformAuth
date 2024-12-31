@@ -11,6 +11,15 @@ group = "io.github.sunildhiman90"
 version = "0.0.1"
 
 kotlin {
+
+    targets.configureEach {
+        compilations.configureEach {
+            compileTaskProvider.get().compilerOptions {
+                freeCompilerArgs.add("-Xexpect-actual-classes")
+            }
+        }
+    }
+
     jvm()
     androidTarget {
         publishAllLibraryVariants()

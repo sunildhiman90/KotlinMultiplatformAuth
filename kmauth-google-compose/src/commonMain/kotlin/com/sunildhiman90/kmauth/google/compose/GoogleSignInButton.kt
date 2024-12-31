@@ -84,6 +84,6 @@ fun GoogleSignInButton(
 @Composable
 fun rememberGoogleAuthManager(): GoogleAuthManager {
     return remember {
-        KMAuthGoogle.getGoogleAuthManager()
+        KMAuthGoogle.googleAuthManager
     }
 }

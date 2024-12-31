@@ -19,7 +19,7 @@ fun App() {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
 
             //Ideally you will be using it from ViewModel or Repo
-            val googleAuthManager = KMAuthGoogle.getGoogleAuthManager()
+            val googleAuthManager = KMAuthGoogle.googleAuthManager
 
             val scope = rememberCoroutineScope()
             Button(onClick = {

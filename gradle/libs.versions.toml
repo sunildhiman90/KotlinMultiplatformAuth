@@ -1,9 +1,10 @@
 [versions]
 agp = "8.5.0"
+coroutinesVersion = "1.10.1"
 googleApiClient = "2.7.1"
 googleHttpClientGson = "1.45.2"
 googleOauthClient = "1.36.0"
-kotlin = "2.0.20"
+kotlin = "2.1.0"
 android-minSdk = "24"
 android-compileSdk = "34"
 kotlinxSerializationJson = "1.7.3"
@@ -20,6 +21,7 @@ androidx-activityCompose = "1.9.3"
 
 
 [libraries]
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutinesVersion" }
 google-api-client = { module = "com.google.api-client:google-api-client", version.ref = "googleApiClient" }
 google-http-client-gson = { module = "com.google.http-client:google-http-client-gson", version.ref = "googleHttpClientGson" }
 google-oauth-client = { module = "com.google.oauth-client:google-oauth-client", version.ref = "googleOauthClient" }

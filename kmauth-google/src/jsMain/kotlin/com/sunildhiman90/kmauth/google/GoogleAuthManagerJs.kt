@@ -2,6 +2,7 @@ package com.sunildhiman90.kmauth.google
 
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthUser
+import com.sunildhiman90.kmauth.google.externals.google
 import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.HTMLElement
@@ -12,31 +13,6 @@ import kotlin.js.json
 
 const val GSI_CLIENT_URL = "https://accounts.google.com/gsi/client"
 const val GOOGLE_BUTTON_ID = "gid"
-
-//For js global object variables, we can use external object
-external object google {
-    object accounts {
-        object id {
-            fun initialize(config: dynamic)
-            fun renderButton(element: dynamic, options: dynamic)
-            fun prompt(callback: (response: PromptMomentNotification) -> Unit)
-            fun disableAutoSelect()
-
-            object PromptMomentNotification {
-                fun isDisplayMoment(): Boolean?
-                fun isDisplayed(): Boolean?
-                fun isNotDisplayed(): Boolean?
-                fun getNotDisplayedReason(): String?
-                fun isSkippedMoment(): Boolean?
-                fun getSkippedReason(): Boolean?
-                fun isDismissedMoment(): Boolean?
-                fun getDismissedReason(): String?
-                fun getMomentType(): String?
-            }
-        }
-    }
-}
-
 
 internal class GoogleAuthManagerJs : GoogleAuthManager {
 

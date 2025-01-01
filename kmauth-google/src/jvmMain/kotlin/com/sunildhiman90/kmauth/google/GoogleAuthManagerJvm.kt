@@ -26,6 +26,13 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
@@ -77,9 +84,9 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     }
 
     // Start the Ktor HTTP server to handle the OAuth redirect response
-    private fun startHttpServer(flow: GoogleAuthorizationCodeFlow): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
-        Logger.d("Starting HTTP server on port 8080")
-        val server = embeddedServer(Netty, port = 8080) {
+    private fun startHttpServer(flow: GoogleAuthorizationCodeFlow, port: Int = 8080): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
+        Logger.d("Starting HTTP server on port $port")
+        val server = embeddedServer(Netty, port = port) {
             install(ContentNegotiation) {
                 json()
             }
@@ -124,7 +131,6 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                                 ),
                                 null
                             )
-
                             Logger.d("Authentication successful.")
                             // Send response back to the client
                             call.respondText(
@@ -150,37 +156,47 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                         )
                     }
 
-                    //Stop after some delay when done
+                    Logger.d("Shutting down server")
                     server?.stop(1000, 1000)
 
                 }
             }
-        }.start(wait = true)
+        }.start(wait = false)
         return server
     }
 
     private fun launchGoogleSignIn() {
 
-        // We are using google-api-client, alternatively we can use core oauth2 url as well i.e.
-        // https://accounts.google.com/o/oauth2/v2/auth?
-        // scope=email%20profile&
-        // response_type=code&
-        // state=security_token%3D138r5719ru3e1%26url%3Dhttps%3A%2F%2Foauth2.example.com%2Ftoken&
-        // redirect_uri=com.example.app%3A/oauth2redirect&
-        // client_id=client_id
+        try {
+            // We are using google-api-client, alternatively we can use core oauth2 url as well i.e.
+            // https://accounts.google.com/o/oauth2/v2/auth?
+            // scope=email%20profile&
+            // response_type=code&
+            // state=security_token%3D138r5719ru3e1%26url%3Dhttps%3A%2F%2Foauth2.example.com%2Ftoken&
+            // redirect_uri=com.example.app%3A/oauth2redirect&
+            // client_id=client_id
 
-        val flow = initializeGoogleAuthCodeFlow()
+            val flow = initializeGoogleAuthCodeFlow()
 
-        val authorizationUrl = flow.newAuthorizationUrl().setRedirectUri(redirectUri).build()
+            val authorizationUrl = flow.newAuthorizationUrl().setRedirectUri(redirectUri).build()
 
-        // Open the user's default web browser to authenticate
-        if (Desktop.isDesktopSupported()) {
-            Desktop.getDesktop().browse(URI(authorizationUrl))
-        }
+            // Open the user's default web browser to authenticate
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(URI(authorizationUrl))
+            }
 
-        // Start the HTTP server in a separate thread, otherwise it will block the ui
-        CoroutineScope(Dispatchers.IO).launch {
-            server = startHttpServer(flow)
+            // Start the HTTP server in a separate thread, otherwise it will block the ui
+            val scope = CoroutineScope(Dispatchers.IO)
+            scope.launch {
+                server = startHttpServer(flow)
+            }.invokeOnCompletion {
+                Logger.d("invokeOnCompletion called")
+                scope.cancel()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onSignResult?.invoke(null, e)
+            Logger.e(e.message.toString())
         }
     }
 

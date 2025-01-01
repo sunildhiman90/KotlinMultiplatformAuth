@@ -24,7 +24,9 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
 import java.io.File
@@ -45,7 +47,6 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private val redirectUri = "http://localhost:8080/callback" // Ktor will listen on this URI
     private var uniqueUserId: String? = null
     private var onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
-
 
     init {
 
@@ -177,8 +178,10 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             Desktop.getDesktop().browse(URI(authorizationUrl))
         }
 
-        // Start the HTTP server
-        server = startHttpServer(flow)
+        // Start the HTTP server in a separate thread, otherwise it will block the ui
+        CoroutineScope(Dispatchers.IO).launch {
+            server = startHttpServer(flow)
+        }
     }
 
     private fun initializeGoogleAuthCodeFlow(): GoogleAuthorizationCodeFlow {

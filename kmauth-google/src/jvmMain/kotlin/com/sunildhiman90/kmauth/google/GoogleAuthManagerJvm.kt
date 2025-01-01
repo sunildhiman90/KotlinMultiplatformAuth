@@ -27,12 +27,6 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
@@ -54,6 +48,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private val redirectUri = "http://localhost:8080/callback" // Ktor will listen on this URI
     private var uniqueUserId: String? = null
     private var onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     init {
 
@@ -158,6 +153,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
                     Logger.d("Shutting down server")
                     server?.stop(1000, 1000)
+                    scope.cancel()
 
                 }
             }
@@ -186,7 +182,6 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             }
 
             // Start the HTTP server in a separate thread, otherwise it will block the ui
-            val scope = CoroutineScope(Dispatchers.IO)
             scope.launch {
                 server = startHttpServer(flow)
             }.invokeOnCompletion {

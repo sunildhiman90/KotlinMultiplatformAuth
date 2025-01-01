@@ -31,11 +31,12 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
                     return@signInWithPresentingViewController
                 }
 
+                Logger.withTag(TAG).e { "Success in google Sign In" }
+
                 val user = result?.user
                 val userId = user?.userID
                 val idToken = user?.idToken
                 val accessToken = user?.accessToken
-                Logger.withTag(TAG).d { "signIn user: $user" }
                 userId?.let {
                     kmAuthUser = KMAuthUser(
                         id = userId,

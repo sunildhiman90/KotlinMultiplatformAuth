@@ -112,6 +112,8 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
                         KMAuthUser(
                             id = googleIdTokenCredential.id,
                             idToken = idToken,
+                            email = googleIdTokenCredential.id,
+                            phoneNumber = googleIdTokenCredential.phoneNumber,
                             name = googleIdTokenCredential.displayName,
                             profilePicUrl = googleIdTokenCredential.profilePictureUri.toString()
                         )

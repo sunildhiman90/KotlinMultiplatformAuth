@@ -17,7 +17,6 @@ dependencyResolutionManagement {
 rootProject.name = "KotlinMultiplatformAuth"
 include(
     ":kmauth-core",
-    ":kmauth-firebase",
     ":kmauth-google",
     ":kmauth-google-compose",
     ":sample:composeApp"

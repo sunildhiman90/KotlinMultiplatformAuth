@@ -19,6 +19,18 @@ mavenPublishing {
         inceptionYear.set("2025")
         url.set("https://github.com/sunildhiman90/KotlinMultiplatformAuth/")
 
+        signing {
+            if (project.hasProperty("signing.gnupg.keyName")) {
+                //useGpgCmd()
+                useInMemoryPgpKeys(
+                    System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId"),
+                    System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey"),
+                    System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+                )
+                sign(publishing.publications)
+            }
+        }
+
         licenses {
             license {
                 name.set("The Apache License, Version 2.0")
@@ -42,13 +54,3 @@ mavenPublishing {
 }
 
 
-signing {
-    if (project.hasProperty("signing.gnupg.keyName")) {
-        //useGpgCmd()
-        useInMemoryPgpKeys(
-            System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey"),
-            System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
-        )
-        sign(publishing.publications)
-    }
-}

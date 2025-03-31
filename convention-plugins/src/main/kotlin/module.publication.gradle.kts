@@ -37,7 +37,7 @@ publishing {
             }
             scm {
                 url = "https://github.com/sunildhiman90/KotlinMultiplatformAuth"
-                connection = "https://github.com/sunildhiman90/KotlinMultiplatformAuth.git"
+                connection = "scm:git:git://github.com/sunildhiman90/KotlinMultiplatformAuth.git"
                 developerConnection = "https://github.com/sunildhiman90"
             }
         }

@@ -24,6 +24,6 @@ jobs:
           distribution: 'zulu'
           java-version: 21
       - name: Publish to MavenCentral
-        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-configuration-cache
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
 
 

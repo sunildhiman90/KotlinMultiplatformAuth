@@ -10,6 +10,7 @@ android-compileSdk = "35"
 kotlinxSerializationJson = "1.7.3"
 ktorServerCore = "3.0.1"
 nexus-publish = "2.0.0-rc-1"
+gradle-maven-publish-plugin-version = "0.29.0"
 credentials = "1.5.0"
 firebaseAuth = "2.1.0"
 googleid = "1.1.1"
@@ -32,6 +33,7 @@ ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negoti
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktorServerCore" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktorServerCore" }
 nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
+gradle-maven-publish-plugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "gradle-maven-publish-plugin-version" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }

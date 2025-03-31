@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.sunildhiman90"
-version = "0.0.1-alpha"
+version = "0.0.1-alpha-test"
 
 kotlin {
 

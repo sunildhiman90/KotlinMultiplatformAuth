@@ -10,7 +10,8 @@ mavenPublishing {
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     //signAllPublications() //this is not working,so applied it manually below mavenPublishing block
-    coordinates("io.github.sunildhiman90", "KotlinMultiplatformAuth", "0.0.1-alpha")
+
+    coordinates("io.github.sunildhiman90", project.name, "0.0.1-alpha")
 
     pom {
         name.set("KotlinMultiplatformAuth")

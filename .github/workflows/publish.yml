@@ -33,8 +33,10 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 21
+      - name: Clean Build
+        run: ./gradlew clean
       - name: Publish to MavenCentral
-        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --warning-mode all
 
 
   github-release:

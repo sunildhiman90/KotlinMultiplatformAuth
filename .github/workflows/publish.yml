@@ -15,7 +15,7 @@ jobs:
   build:
     uses: ./.github/workflows/gradle.yml
   publish:
-    needs: build
+    #needs: build # just for testing
     if: startsWith(github.ref, 'refs/tags/v')
     name: Release build and publish to maven
     runs-on: macOS-latest

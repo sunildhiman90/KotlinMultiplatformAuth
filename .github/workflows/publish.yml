@@ -34,7 +34,7 @@ jobs:
       - name: Clean Build
         run: ./gradlew clean
       - name: Publish to MavenCentral
-        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --warning-mode all
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
 
 
   github-release:

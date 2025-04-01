@@ -1,7 +1,5 @@
 name: Publish and Release
 on:
-#  release:
-#    types: [released, prereleased]
   push:
     tags:
       - 'v*'  # Triggers on tags like v1.0, v2.1, etc.
@@ -15,7 +13,7 @@ jobs:
   build:
     uses: ./.github/workflows/gradle.yml
   publish:
-    #needs: build # just for testing
+    needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     name: Release build and publish to maven
     runs-on: macOS-latest

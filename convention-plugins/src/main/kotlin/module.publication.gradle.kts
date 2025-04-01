@@ -1,15 +1,13 @@
 import com.vanniktech.maven.publish.SonatypeHost
-import gradle.kotlin.dsl.accessors._abffafc6a1518578ac0f8e7eb295d049.signing
 
 plugins {
     id("com.vanniktech.maven.publish")
-    signing
 }
 
 mavenPublishing {
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-    //signAllPublications() //this is not working,so applied it manually below mavenPublishing block
+    signAllPublications()
 
     coordinates("io.github.sunildhiman90", project.name, "0.0.1-alpha")
 
@@ -18,18 +16,6 @@ mavenPublishing {
         description.set("Kotlin Multiplatform Authentication Library targetting all platforms")
         inceptionYear.set("2025")
         url.set("https://github.com/sunildhiman90/KotlinMultiplatformAuth/")
-
-        signing {
-            if (project.hasProperty("signing.gnupg.keyName")) {
-                //useGpgCmd()
-                useInMemoryPgpKeys(
-                    System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId"),
-                    System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey"),
-                    System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
-                )
-                sign(publishing.publications)
-            }
-        }
 
         licenses {
             license {
@@ -52,5 +38,3 @@ mavenPublishing {
         }
     }
 }
-
-

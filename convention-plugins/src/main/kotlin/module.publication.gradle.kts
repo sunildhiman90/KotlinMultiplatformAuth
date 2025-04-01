@@ -1,52 +1,40 @@
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.kotlin.dsl.`maven-publish`
+import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-    `maven-publish`
-    signing
+    id("com.vanniktech.maven.publish")
 }
 
-publishing {
-    // Configure all publications
-    publications.withType<MavenPublication> {
-        // Stub javadoc.jar artifact
-        artifact(tasks.register("${name}JavadocJar", Jar::class) {
-            archiveClassifier.set("javadoc")
-            archiveAppendix.set(this@withType.name)
-        })
+mavenPublishing {
 
-        // Provide artifacts information required by Maven Central
-        pom {
-            name = "KotlinMultiplatformAuth"
-            description = "Kotlin Multiplatform Authentication Librar targetting all platforms."
-            inceptionYear = "2024"
-            url = "https://github.com/sunildhiman90/KotlinMultiplatformAuth/"
-            licenses {
-                license {
-                    name = "Apache-2.0"
-                    url = "https://opensource.org/licenses/Apache-2.0"
-                }
-            }
-            developers {
-                developer {
-                    id = "sunildhiman90"
-                    name = "Sunil Kumar"
-                    url = "https://github.com/sunildhiman90"
-                }
-            }
-            scm {
-                url = "https://github.com/sunildhiman90/KotlinMultiplatformAuth"
-                connection = "scm:git:git://github.com/sunildhiman90/KotlinMultiplatformAuth.git"
-                developerConnection = "https://github.com/sunildhiman90"
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
+
+    coordinates("io.github.sunildhiman90", project.name, "0.0.1-alpha")
+
+    pom {
+        name.set("KotlinMultiplatformAuth")
+        description.set("Kotlin Multiplatform Authentication Library targetting all platforms")
+        inceptionYear.set("2025")
+        url.set("https://github.com/sunildhiman90/KotlinMultiplatformAuth/")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
             }
         }
-    }
-}
-
-signing {
-    if (project.hasProperty("signing.gnupg.keyName")) {
-        useGpgCmd()
-        sign(publishing.publications)
+        developers {
+            developer {
+                id.set("sunildhiman90")
+                name.set("Sunil Kumar")
+                url.set("https://github.com/sunildhiman90/")
+            }
+        }
+        scm {
+            url.set("https://github.com/sunildhiman90/KotlinMultiplatformAuth/")
+            connection.set("scm:git:git://github.com/sunildhiman90/sunildhiman90.git")
+            developerConnection.set("scm:git:ssh://git@github.com/sunildhiman90/sunildhiman90.git")
+        }
     }
 }

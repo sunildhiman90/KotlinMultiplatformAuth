@@ -17,7 +17,7 @@ jobs:
   publish:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
-    name: Release build and publish
+    name: Release build and publish to maven
     runs-on: macOS-latest
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -41,6 +41,7 @@ jobs:
     needs: publish  # Runs only if Maven publish is successful
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macOS-latest
+    name: Generate Release Notes
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

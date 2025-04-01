@@ -9,17 +9,20 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 
-    coordinates("io.github.sunildhiman90", project.name, "0.0.1-alpha")
+    val version: String by project
+    val name: String by project
+    val group: String by project
+    coordinates(group, name, version.toString())
 
     pom {
-        name.set("KotlinMultiplatformAuth")
+        this.name.set("KotlinMultiplatformAuth")
         description.set("Kotlin Multiplatform Authentication Library targetting all platforms")
         inceptionYear.set("2025")
         url.set("https://github.com/sunildhiman90/KotlinMultiplatformAuth/")
 
         licenses {
             license {
-                name.set("The Apache License, Version 2.0")
+                this.name.set("The Apache License, Version 2.0")
                 url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                 distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
             }
@@ -27,7 +30,7 @@ mavenPublishing {
         developers {
             developer {
                 id.set("sunildhiman90")
-                name.set("Sunil Kumar")
+                this.name.set("Sunil Kumar")
                 url.set("https://github.com/sunildhiman90/")
             }
         }

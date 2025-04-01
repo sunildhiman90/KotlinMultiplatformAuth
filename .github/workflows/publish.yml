@@ -62,7 +62,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           release_name: Release ${{ github.ref_name }}
-          body_path: RELEASE_NOTES.md  # Uses generated notes from release-drafter
+          generate_release_notes: true  # This will generate release notes automatically from release-drafter
           draft: false
           prerelease: false
         env:

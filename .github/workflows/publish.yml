@@ -46,21 +46,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-        # this will generate release notes using release-drafter and create a GitHub release draft
-      - name: Generate Changelog
-        uses: release-drafter/release-drafter@v5
-        with:
-          config-name: release-drafter.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # this will create a GitHub release from the generated release notes
+      # this will create a GitHub release notes
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           release_name: Release ${{ github.ref_name }}
-          generate_release_notes: true  # This will generate release notes automatically from release-drafter
+          generate_release_notes: true  # This will generate release notes automatically
           draft: false
           prerelease: false
         env:

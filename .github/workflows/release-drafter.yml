@@ -1,0 +1,16 @@
+name-template: 'Release ${{ nextRelease.version }}'
+tag-template: 'v${{ nextRelease.version }}'
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+  - title: '🛠 Improvements'
+    labels:
+      - 'enhancement'
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+template: |
+  ## Changes in this release
+  $CHANGES

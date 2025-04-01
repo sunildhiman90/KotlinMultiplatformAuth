@@ -1,7 +1,16 @@
-name: Publish
+name: Publish and Release
 on:
-  release:
-    types: [released, prereleased]
+#  release:
+#    types: [released, prereleased]
+  push:
+    tags:
+      - 'v*'  # Triggers on tags like v1.0, v2.1, etc.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   build:
     uses: ./.github/workflows/gradle.yml
@@ -27,3 +36,29 @@ jobs:
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
 
 
+  github-release:
+    needs: publish  # Runs only if Maven publish is successful
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+        # this will generate release notes using release-drafter and create a GitHub release draft
+      - name: Generate Changelog
+        uses: release-drafter/release-drafter@v5
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # this will create a GitHub release from the generated release notes
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md  # Uses generated notes from release-drafter
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

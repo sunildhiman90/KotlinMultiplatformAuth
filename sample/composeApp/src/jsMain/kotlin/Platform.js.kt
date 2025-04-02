@@ -1,5 +1,5 @@
-class WasmPlatform: Platform {
-    override val name: String = "Web with Kotlin/Wasm"
+class JsPlatform: Platform {
+    override val name: String = "Web with Kotlin/Js"
 }
 
-actual fun getPlatform(): Platform = WasmPlatform()
+actual fun getPlatform(): Platform = JsPlatform()

@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    uses: ./.github/workflows/gradle.yml
+    uses: ./.github/workflows/build.yml
   publish:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')

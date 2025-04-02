@@ -1,5 +1,10 @@
 # KotlinMultiplatformAuth - A Kotlin Multiplatform Authentication Library
 
+![Build](https://img.shields.io/github/actions/workflow/status/sunildhiman90/KotlinMultiplatformAuth/publish.yml)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1.20-blue.svg?style=flat&logo=kotlin)](https://kotlinlang.org)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.sunildhiman90/kmauth-google?color=blue)](https://central.sonatype.com/search?q=io.github.sunildhiman90+kmauth&smo=true)
+[![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+
 Kotlin Multiplatform Authentication library targeting Android, iOS, Desktop and Web(Kotlin/Js only). Currently
 supports Sign In with Google. Planning to add other providers in the future.
 

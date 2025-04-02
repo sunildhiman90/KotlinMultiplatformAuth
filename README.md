@@ -57,6 +57,7 @@ You can get the googleAuthManager from the KMAuthGoogle object and use it to sig
 
 You can find the sample code in
 the [sample](https://github.com/sunildhiman90/KotlinMultiplatformAuth/tree/main/sample)
+
 **_NOTE:_**  To test the sample, Make sure to perform the Platform Setup for Android, ISO, Desktop and Web(Kotlin/Js only)
 as mentioned in the **Platform Setup** section.
 

@@ -1,8 +1,7 @@
 # KotlinMultiplatformAuth - A Kotlin Multiplatform Authentication Library
 
-Kotlin Multiplatform Authentication library targeting Android, iOS, desktop and Web. Currently
-supports Sign In with Google.
-Planning to add other providers in the future.
+Kotlin Multiplatform Authentication library targeting Android, iOS, Desktop and Web(Kotlin/Js only). Currently
+supports Sign In with Google. Planning to add other providers in the future.
 
 ## Quick Start Sample Code
 
@@ -58,7 +57,7 @@ You can get the googleAuthManager from the KMAuthGoogle object and use it to sig
 
 You can find the sample code in
 the [sample](https://github.com/sunildhiman90/KotlinMultiplatformAuth/tree/main/sample)
-**_NOTE:_**  To test the sample, Make sure to perform the Platform Setup for Android, ios, desktop and web
+**_NOTE:_**  To test the sample, Make sure to perform the Platform Setup for Android, ISO, Desktop and Web(Kotlin/Js only)
 as mentioned in the **Platform Setup** section.
 
 ### How to Use in Compose Implementation?
@@ -242,7 +241,7 @@ KMAuthInitializer.initClientSecret(
 )
 ```
 
-#### Web (JS/Wasm)
+#### Web (Kotlin/Js)
 
 You need to call the
 MAuthInitializer.init method with webClientId if you are not using Alternative Way mentioned in

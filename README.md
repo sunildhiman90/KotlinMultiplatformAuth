@@ -58,6 +58,8 @@ You can get the googleAuthManager from the KMAuthGoogle object and use it to sig
 
 You can find the sample code in
 the [sample](https://github.com/sunildhiman90/KotlinMultiplatformAuth/tree/main/sample)
+**_NOTE:_**  To test the sample, Make sure to perform the Platform Setup for Android, ios, desktop and web
+as mentioned in the **Platform Setup** section.
 
 ### How to Use in Compose Implementation?
 
@@ -199,9 +201,7 @@ iOS becoz we will call it from common code.
 **Additional Setup:**
 For iOS, we need to do some additional setups as well for Google Sign-In for iOS.
 
-1. Make sure you have added `GoogleService-Info.plist`(if using firebase) or
-ios client plist file(if you are not using firebase, you can download it from Google Cloud Platform Console oauth ios client and rename it to `GoogleService-Info.plist` and then add) in your Xcode project in iosApp/iosApp directory.
-2. You need to add following code in your Info.plist file.
+1. You need to add following code in your Info.plist file.
 
 ```xml  
 

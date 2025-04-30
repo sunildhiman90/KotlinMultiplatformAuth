@@ -269,3 +269,9 @@ Android setup.
 If you are using Alternative Way, then you don't need to call the KMAuthInitializer.init method from
 web becoz we will call it from common code.
 
+IMP:
+Also make sure you have added your allowed origin urls in : Authorized JavaScript origins section in
+Google Cloud Platform Console for web auth client, Otherwise you will get this error:
+`Access blocked, Authorization error: The request is not allowed.`
+
+For example if you are running on localhost:8080, add this: http://localhost:8080, IN case of your production url you need to add your prod url.

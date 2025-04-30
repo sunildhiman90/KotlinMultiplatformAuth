@@ -243,6 +243,10 @@ _**NOTE:_** You can get your YOUR_IOS_CLIENT_ID and YOUR_REVERSED_CLIENT_ID from
 From ios oauth client detail, you can get your Client ID as YOUR_IOS_CLIENT_ID and iOS URL scheme as
 YOUR_REVERSED_CLIENT_ID from additional information section.
 
+2. You also need to add [Google Sign-In for iOS Swift Package](https://developers.google.com/identity/sign-in/ios/start-integrating#swift-package-manager)
+   dependency in your xcode project, Otherwise you will get this error:
+``
+ld: warning: Could not find or use auto-linked framework 'GoogleSignIn': framework 'GoogleSignIn' not found``
 #### Desktop
 
 On Desktop/Jvm platform, you need to call the KMAuthInitializer.initClientSecret method with

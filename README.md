@@ -5,7 +5,8 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.sunildhiman90/kmauth-google?color=blue)](https://central.sonatype.com/search?q=io.github.sunildhiman90+kmauth&smo=true)
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Kotlin Multiplatform Authentication library targeting Android, iOS, Desktop and Web(Kotlin/Js only). Currently
+Kotlin Multiplatform Authentication library targeting Android, iOS, Desktop and Web(Kotlin/Js only).
+Currently
 supports Sign In with Google. Planning to add other providers in the future.
 
 ## Quick Start Sample Code
@@ -27,7 +28,8 @@ KMAuthInitializer.init(webClientId = "YOUR_WEB_CLIENT_ID")
 
 ```
 
-We need webClientId from Google Cloud Platform Console to setup the serverClientId in Google API for identifying signed-in users in backend server.
+We need webClientId from Google Cloud Platform Console to setup the serverClientId in Google API for
+identifying signed-in users in backend server.
 
 ### GoogleAuthManager
 
@@ -63,7 +65,8 @@ You can get the googleAuthManager from the KMAuthGoogle object and use it to sig
 You can find the sample code in
 the [sample](https://github.com/sunildhiman90/KotlinMultiplatformAuth/tree/main/sample)
 
-**_NOTE:_**  To test the sample, Make sure to perform the Platform Setup for Android, ISO, Desktop and Web(Kotlin/Js only)
+**_NOTE:_**  To test the sample, Make sure to perform the Platform Setup for Android, ISO, Desktop
+and Web(Kotlin/Js only)
 as mentioned in the **Platform Setup** section.
 
 ### How to Use in Compose Implementation?
@@ -105,8 +108,14 @@ Then you can add the required library module to your project as follows:
 
 ```kotlin
 commonMain.dependencies {
-    api("com.github.sunildhiman90:kmauth-google:<version>") //For using in Pure KMP module without compose, We need to add this as api dependency
-    implementation("com.github.sunildhiman90:kmauth-google-compose:<version>") // KMP Compose implementation with in built GoogleSignInButton composable
+    // For using in Pure KMP module without compose, We need to add this as api dependency
+    api("com.github.sunildhiman90:kmauth-google:<version>")
+
+    //For using in Compose Multiplatform app.
+    implementation("com.github.sunildhiman90:kmauth-google:<version>")
+
+    // Optional: Only if you want to use in built One Tap GoogleSignInButton composable directly
+    implementation("com.github.sunildhiman90:kmauth-google-compose:<version>")
 }
 ```
 
@@ -122,7 +131,8 @@ KotlinMultiplatformAuth has the following modules:
   dependency
 - **kmauth-google:** Pure Kotlin Multiplatform module, If you want to use in kotlin multiplatform
   without compose multiplatform. This can be used in compose multiplatform as well.
-- **kmauth-google-compose:** Compose implementation with in built GoogleSignInButton composable. If you
+- **kmauth-google-compose:** Compose implementation with in built GoogleSignInButton composable. If
+  you
   want to use in kotlin multiplatform with compose multiplatform.
 
 ## Setup
@@ -210,28 +220,28 @@ For iOS, we need to do some additional setups as well for Google Sign-In for iOS
 
 ```xml  
 
-<key>GIDClientID</key>
-<string>YOUR_IOS_CLIENT_ID</string>
+<key>GIDClientID</key><string>YOUR_IOS_CLIENT_ID</string>
 
-<key>CFBundleURLTypes</key>
-<array>
-    <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-            <string>YOUR_IOS_REVERSED_CLIENT_ID</string>
-        </array>
-    </dict>
+<key>CFBundleURLTypes</key><array>
+<dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+        <string>YOUR_IOS_REVERSED_CLIENT_ID</string>
+    </array>
+</dict>
 </array>
 ```
+
 Suppose your iOS client Id is :
 `xyzzzzz.apps.googleusercontent.com`
 
 Then your YOUR_REVERSED_CLIENT_ID value will be:
 `com.googleusercontent.apps.xyzzzzz`
 
-_**NOTE:_** You can get your YOUR_IOS_CLIENT_ID and YOUR_REVERSED_CLIENT_ID from `GoogleService-Info.plist` or from Google Cloud Platform Console for iOS oauth client detail. 
-From ios oauth client detail, you can get your Client ID as YOUR_IOS_CLIENT_ID and iOS URL scheme as YOUR_REVERSED_CLIENT_ID from additional information section.
-
+_**NOTE:_** You can get your YOUR_IOS_CLIENT_ID and YOUR_REVERSED_CLIENT_ID from
+`GoogleService-Info.plist` or from Google Cloud Platform Console for iOS oauth client detail.
+From ios oauth client detail, you can get your Client ID as YOUR_IOS_CLIENT_ID and iOS URL scheme as
+YOUR_REVERSED_CLIENT_ID from additional information section.
 
 #### Desktop
 

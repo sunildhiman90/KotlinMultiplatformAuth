@@ -109,13 +109,13 @@ Then you can add the required library module to your project as follows:
 ```kotlin
 commonMain.dependencies {
     // For using in Pure KMP module without compose, We need to add this as api dependency
-    api("com.github.sunildhiman90:kmauth-google:<version>")
+    api("io.github.sunildhiman90:kmauth-google:<version>")
 
     //For using in Compose Multiplatform app.
-    implementation("com.github.sunildhiman90:kmauth-google:<version>")
+    implementation("io.github.sunildhiman90:kmauth-google:<version>")
 
     // Optional: Only if you want to use in built One Tap GoogleSignInButton composable directly
-    implementation("com.github.sunildhiman90:kmauth-google-compose:<version>")
+    implementation("io.github.sunildhiman90:kmauth-google-compose:<version>")
 }
 ```
 

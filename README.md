@@ -105,7 +105,7 @@ Then you can add the required library module to your project as follows:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("com.github.sunildhiman90:kmauth-google:<version>") //Pure KMP module without compose
+    api("com.github.sunildhiman90:kmauth-google:<version>") //For using in Pure KMP module without compose, We need to add this as api dependency
     implementation("com.github.sunildhiman90:kmauth-google-compose:<version>") // KMP Compose implementation with in built GoogleSignInButton composable
 }
 ```

@@ -249,7 +249,7 @@ YOUR_REVERSED_CLIENT_ID from additional information section.
 ld: warning: Could not find or use auto-linked framework 'GoogleSignIn': framework 'GoogleSignIn' not found``
 #### Desktop
 
-On Desktop/Jvm platform, you need to call the KMAuthInitializer.initClientSecret method with
+1. On Desktop/Jvm platform, you need to call the KMAuthInitializer.initClientSecret method with
 clientSecret which you can get from web client id.
 IF you go to the web client id detail and check additional information, It will show you client
 secret there.
@@ -260,6 +260,7 @@ KMAuthInitializer.initClientSecret(
     clientSecret = OAUTH_CLIENT_SECRET,
 )
 ```
+2. You also need to make sure you have added the redirect url in web client in google cloud platform oauth clients in **Authorized redirect URIs**: http://localhost:8080/callback, And this may take some time to reflect updates in your code while running your code.
 
 #### Web (Kotlin/Js)
 

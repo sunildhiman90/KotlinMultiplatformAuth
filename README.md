@@ -9,6 +9,9 @@ Kotlin Multiplatform Authentication library targeting Android, iOS, Desktop and 
 Currently
 supports Sign In with Google. Planning to add other providers in the future.
 
+## Deepwiki Docs
+[![Deepwiki Docs](https://img.shields.io/badge/DeepWiki-009485?style=for-the-badge&logo=readthedocs&logoColor=white)](https://deepwiki.com/sunildhiman90/KotlinMultiplatformAuth)
+
 ## Quick Start Sample Code
 
 ### KMAuthInitializer

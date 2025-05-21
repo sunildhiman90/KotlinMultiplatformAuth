@@ -1,23 +1,22 @@
 [versions]
-agp = "8.5.2"
-coroutinesVersion = "1.10.1"
-googleApiClient = "2.7.1"
-googleHttpClientGson = "1.45.2"
-googleOauthClient = "1.36.0"
-kotlin = "2.1.20"
+agp = "8.7.0"
+coroutinesVersion = "1.10.2"
+googleApiClient = "2.7.2"
+googleHttpClientGson = "1.47.0"
+googleOauthClient = "1.39.0"
+kotlin = "2.1.21"
 android-minSdk = "24"
 android-compileSdk = "35"
-kotlinxSerializationJson = "1.7.3"
-ktorServerCore = "3.0.1"
-nexus-publish = "2.0.0-rc-1"
-gradle-maven-publish-plugin-version = "0.29.0"
+kotlinxSerializationJson = "1.8.1"
+ktorServerCore = "3.1.1"
+gradle-maven-publish-plugin-version = "0.32.0"
 credentials = "1.5.0"
 firebaseAuth = "2.1.0"
 googleid = "1.1.1"
 kermit = "2.0.4"
 
 android-targetSdk = "35"
-compose-plugin = "1.7.1"
+compose-plugin = "1.8.0"
 androidx-activityCompose = "1.10.1"
 
 
@@ -32,7 +31,6 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktorServerCore" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktorServerCore" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktorServerCore" }
-nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
 gradle-maven-publish-plugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "gradle-maven-publish-plugin-version" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }

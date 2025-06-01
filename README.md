@@ -12,6 +12,9 @@ supports Sign In with Google. Planning to add other providers in the future.
 ## Deepwiki Docs
 [![Deepwiki Docs](https://img.shields.io/badge/DeepWiki-009485?style=for-the-badge&logo=readthedocs&logoColor=white)](https://deepwiki.com/sunildhiman90/KotlinMultiplatformAuth)
 
+## Youtube Video
+[How to Use Google Signin In Compose Multiplatform using KotlinMultiplatformAuth ](https://youtu.be/-5Ws4HSaYJc)
+
 ## Quick Start Sample Code
 
 ### KMAuthInitializer
@@ -279,3 +282,11 @@ Google Cloud Platform Console for web auth client, Otherwise you will get this e
 `Access blocked, Authorization error: The request is not allowed.`
 
 For example if you are running on localhost:8080, add this: http://localhost:8080, IN case of your production url you need to add your prod url.
+
+## Contributions
+Feel free to contribute if you finds any issues or bugs or want to add a new auth provider support. Future plans are to add WasmJs support and other providers as well such as Facebook, Github and Apple Login.
+
+## Used By Projects List
+Checkout a voluntary list of projects/companies using KotlinMultiplatformAuth: https://github.com/sunildhiman90/KotlinMultiplatformAuth/discussions/3. Feel free to add your project!
+
+

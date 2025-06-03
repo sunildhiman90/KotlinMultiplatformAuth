@@ -3,20 +3,21 @@ package com.sunildhiman90.kmauth.google
 import co.touchlab.kermit.Logger
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthUser
+import com.sunildhiman90.kmauth.google.externals.CredentialResponse
 import com.sunildhiman90.kmauth.google.externals.google
+import com.sunildhiman90.kmauth.google.jsUtils.googleIdConfig
+import com.sunildhiman90.kmauth.google.jsUtils.gsiButtonConfig
 import kotlinx.browser.document
 import kotlinx.browser.window
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLScriptElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.get
-import org.w3c.xhr.JSON
 
 
 const val GSI_CLIENT_URL = "https://accounts.google.com/gsi/client"
@@ -35,7 +36,7 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
         require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
             val message =
                 "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
-            co.touchlab.kermit.Logger.withTag(TAG).e(message)
+            Logger.withTag(TAG).e(message)
             message
         }
 
@@ -53,17 +54,27 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
                 onSuccess = { credential ->
                     Logger.i("initializeGoogleSignIn: onSuccess")
                     // Decode the JWT token to get the user's information
-                    val userInfo = decodeJwtPayload(credential as String)
+                    val userInfo = decodeJwtPayload(credential)?.jsonObject
 
-                    onSignResult?.invoke(
-                        KMAuthUser(
-                            id = userInfo.sub as String,
-                            idToken = credential as? String,
-                            name = userInfo.name as? String,
-                            email = userInfo.email as? String,
-                            profilePicUrl = userInfo.picture as? String
-                        ), null
-                    )
+                    if(userInfo != null) {
+                        val sub = userInfo["sub"]?.jsonPrimitive
+                        val name = userInfo["name"]?.jsonPrimitive
+                        val email = userInfo["email"]?.jsonPrimitive
+                        val picture = userInfo["picture"]?.jsonPrimitive
+
+                        Logger.d("initializeGoogleSignIn: onSuccess: sub: $sub, name: $name, email: $email, picture: $picture")
+                        onSignResult?.invoke(
+                            KMAuthUser(
+                                id = sub?.content ?: "",
+                                idToken = credential,
+                                name = name?.content ?: "",
+                                email = email?.content ?: "",
+                                profilePicUrl = picture?.content ?: ""
+                            ), null
+                        )
+                    } else {
+                        onSignResult?.invoke(null, Exception("Google sign in failed"))
+                    }
                 },
             )
         }
@@ -93,7 +104,7 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
     private fun initializeGoogleSignIn(
         clientId: String,
-        onSuccess: (JsAny) -> Unit,
+        onSuccess: (String) -> Unit,
         onError: (() -> Unit)? = null
     ) {
 
@@ -115,30 +126,19 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
             try {
 
-                val callbackFunction: (JsAny) -> Unit = { response: JsAny ->
+                val callbackFunction: (CredentialResponse) -> Unit = { response ->
                     Logger.d("initializeGoogleSignIn: callbackFunction")
                     isGoogleClientInitialized = true
-
-                    // Get the credential (JWT token) from the response,
-                    // credential:  this field is the ID token as a base64-encoded JSON Web Token (JWT) string
                     val credential = response.credential
-
-                    if (credential != null) {
-                        onSuccess(credential as JsAny)
+                    if (!credential.isNullOrEmpty()) {
+                        onSuccess(credential)
                     } else {
                         onError?.invoke()
                     }
                 }
-                val config = buildJsonObject {
-                    put("client_id", clientId)
-                    put("ux_mode", "popup")
-                    put("callback", callbackFunction as JsonElement)
-                    put("use_fedcm_for_prompt", true)
-                }
 
-                google.accounts.id.initialize(
-                    config = config
-                )
+                val config = googleIdConfig(clientId, callbackFunction)
+                google.accounts.id.initialize(config)
 
                 addGoogleSignInButton()
 
@@ -201,22 +201,19 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
         theme: String = "outline",
         size: String = "large",
     ) {
-        val signInButtonWrapper = document.getElementById(containerId)
+        val signInButtonWrapper = document.getElementById(containerId) as HTMLElement
         google.accounts.id.renderButton(
             signInButtonWrapper,
-            json(
-                "theme" to theme,
-                "size" to size
-            )
+            gsiButtonConfig(theme, size)
         )
     }
 
-    private fun decodeJwtPayload(jwt: String): JsAny {
+    private fun decodeJwtPayload(jwt: String): JsonElement? {
         // JWTs are Base64URL encoded. Split the token and decode the payload part.
         return try {
             val payload = jwt.split(".")[1] // The payload is the second part of the JWT
             val decodedPayload = window.atob(payload) // Decode Base64URL to a string
-            JSON.parse<JsAny>(decodedPayload) // Parse JSON string to a JsAny object
+            Json.parseToJsonElement(decodedPayload)
         } catch (e: Exception) {
             Logger.e("Failed to decode JWT payload", e)
             null
@@ -237,4 +234,10 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
     }
 
 }
+
+
+@Serializable
+data class GoogleCredentialResponse(
+    val credential: String
+)
 

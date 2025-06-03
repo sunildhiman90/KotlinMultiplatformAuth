@@ -15,10 +15,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            // Initialize the KMAuthInitializer, for Android platform, we need to call it from the activity,
-            // Becoz we need activity context, For other platforms we can use init =>  KMAuthInitializer.init(webClientId = "YOUR_WEB_CLIENT_ID")
-            KMAuthInitializer.initWithContext(
-                webClientId = "YOUR_WEB_CLIENT_ID",
+            KMAuthInitializer.initContext(
                 kmAuthPlatformContext = KMAuthPlatformContext(this)
             )
 

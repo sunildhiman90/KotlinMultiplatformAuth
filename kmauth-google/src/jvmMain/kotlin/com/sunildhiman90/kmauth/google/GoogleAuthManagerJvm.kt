@@ -25,8 +25,11 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
@@ -36,6 +39,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.UUID
+import kotlin.jvm.java
 
 
 internal class GoogleAuthManagerJvm : GoogleAuthManager {
@@ -48,7 +52,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private val redirectUri = "http://localhost:8080/callback" // Ktor will listen on this URI
     private var uniqueUserId: String? = null
     private var onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private var scope = CoroutineScope(Dispatchers.IO)
 
     init {
 
@@ -79,6 +83,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     }
 
     // Start the Ktor HTTP server to handle the OAuth redirect response
+    @OptIn(DelicateCoroutinesApi::class)
     private fun startHttpServer(flow: GoogleAuthorizationCodeFlow, port: Int = 8080): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
         Logger.d("Starting HTTP server on port $port")
         val server = embeddedServer(Netty, port = port) {
@@ -151,14 +156,28 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                         )
                     }
 
-                    Logger.d("Shutting down server")
-                    server?.stop(1000, 1000)
-                    scope.cancel()
+                    // 🔁 Then shutdown outside of the Ktor pipeline
+                    performShutdownCleanup()
 
                 }
             }
         }.start(wait = false)
         return server
+    }
+
+    private fun performShutdownCleanup() {
+        scope.launch {
+            try {
+                delay(500) // wait for response to be sent
+                Logger.d("Shutting down server")
+                server?.stop(1000, 1000) // Stop the server gracefully
+
+                scope.cancel()
+            } catch (e: Exception) {
+                Logger.e("Error shutting down server: ${e.message}")
+                scope.cancel()  // Ensure scope is cancelled even if there's an error
+            }
+        }
     }
 
     private fun launchGoogleSignIn() {
@@ -182,16 +201,15 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             }
 
             // Start the HTTP server in a separate thread, otherwise it will block the ui
+            // We need to reinitialize the scope, otherwise it will throw exception second time becoz we are cancelling the scope after stopping the server and cancelled scope can not be used to launch coroutine again without recreating new scope
+            scope = CoroutineScope(Dispatchers.IO)
             scope.launch {
                 server = startHttpServer(flow)
-            }.invokeOnCompletion {
-                Logger.d("invokeOnCompletion called")
-                scope.cancel()
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            Logger.e("Not able to start the server: ${e.message.toString()}")
             onSignResult?.invoke(null, e)
-            Logger.e(e.message.toString())
         }
     }
 

@@ -6,8 +6,10 @@ import com.sunildhiman90.kmauth.core.KMAuthPlatformContext
 import com.sunildhiman90.kmauth.core.KMAuthUser
 import com.sunildhiman90.kmauth.core.toThrowable
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSError
 import platform.UIKit.UIApplication
+import kotlin.coroutines.resume
 
 
 const val PROFILE_PIC_SIZE: ULong = 350u
@@ -16,6 +18,10 @@ const val PROFILE_PIC_SIZE: ULong = 350u
 internal class GoogleAuthManagerIOS : GoogleAuthManager {
 
     override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
+        signInCore(onSignResult)
+    }
+
+    private fun signInCore(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
         try {
             val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
             requireNotNull(rootViewController) { "Root view controller is null" }
@@ -44,7 +50,8 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
                         accessToken = accessToken?.tokenString,
                         name = user.profile?.name,
                         email = user.profile?.email,
-                        profilePicUrl = user.profile?.imageURLWithDimension(dimension = PROFILE_PIC_SIZE)?.absoluteString()
+                        profilePicUrl = user.profile?.imageURLWithDimension(dimension = PROFILE_PIC_SIZE)
+                            ?.absoluteString()
                     )
                     onSignResult(kmAuthUser, null)
                 }
@@ -52,6 +59,21 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
             }
         } catch (e: Exception) {
             Logger.withTag(TAG).e { "Exception in google signIn: $e" }
+        }
+    }
+
+    override suspend fun signIn(): Result<KMAuthUser?> {
+        return suspendCancellableCoroutine { continuation ->
+            val onSignResult: (KMAuthUser?, Throwable?) -> Unit = { user, error ->
+                if (error == null) {
+                    // Resume coroutine with an exception provided by the callback
+                    continuation.resume(Result.success(user))
+                } else {
+                    // Resume coroutine with a value provided by the callback
+                    continuation.resume(Result.failure(Exception("Error in google Sign In: $error")))
+                }
+            }
+            signInCore(onSignResult)
         }
     }
 

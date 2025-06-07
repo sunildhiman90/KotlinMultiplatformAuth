@@ -4,19 +4,35 @@ import co.touchlab.kermit.Logger
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthUser
 import com.sunildhiman90.kmauth.google.externals.CredentialResponse
+import com.sunildhiman90.kmauth.google.externals.GoogleUserJs
+import com.sunildhiman90.kmauth.google.externals.TokenClientConfig
+import com.sunildhiman90.kmauth.google.externals.TokenResponse
 import com.sunildhiman90.kmauth.google.externals.google
+import com.sunildhiman90.kmauth.google.jsUtils.convertToGoogleUserInfo
 import com.sunildhiman90.kmauth.google.jsUtils.googleIdConfig
-import com.sunildhiman90.kmauth.google.jsUtils.gsiButtonConfig
+import com.sunildhiman90.kmauth.google.jsUtils.overrideTokenClientConfig
+import com.sunildhiman90.kmauth.google.jsUtils.tokenClientConfig
 import kotlinx.browser.document
 import kotlinx.browser.window
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLScriptElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.get
+import org.w3c.fetch.CORS
+import org.w3c.fetch.Headers
+import org.w3c.fetch.RequestInit
+import org.w3c.fetch.RequestMode
+import org.w3c.fetch.Response
+import kotlin.coroutines.resume
 
 const val GSI_CLIENT_URL = "https://accounts.google.com/gsi/client"
 const val GOOGLE_BUTTON_ID = "gid"
@@ -34,7 +50,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
             val message =
                 "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
-            co.touchlab.kermit.Logger.withTag(TAG).e(message)
+            Logger.withTag(TAG).e(message)
             message
         }
 
@@ -43,10 +59,12 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         loadGoogleSignInLibrary {
             console.log("Google sign in library loaded")
             isLibraryLoaded = true
+
+            //for one tap prompt
             initializeGoogleSignIn(
                 webClientId,
                 onError = {
-                    console.info("initializeGoogleSignIn: onError")
+                    Logger.i("initializeGoogleSignIn: onError")
                     onSignResult?.invoke(null, Exception("Google sign in failed"))
                 },
                 onSuccess = { credential ->
@@ -54,13 +72,12 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
                     // Decode the JWT token to get the user's information
                     val userInfo = decodeJwtPayload(credential)?.jsonObject
 
-                    if(userInfo != null) {
+                    if (userInfo != null) {
                         val sub = userInfo["sub"]?.jsonPrimitive
                         val name = userInfo["name"]?.jsonPrimitive
                         val email = userInfo["email"]?.jsonPrimitive
                         val picture = userInfo["picture"]?.jsonPrimitive
 
-                        Logger.d("initializeGoogleSignIn: onSuccess: sub: $sub, name: $name, email: $email, picture: $picture")
                         onSignResult?.invoke(
                             KMAuthUser(
                                 id = sub?.content ?: "",
@@ -77,6 +94,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             )
         }
     }
+
 
     private fun loadGoogleSignInLibrary(onLoad: () -> Unit) {
         val script =
@@ -124,30 +142,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
             try {
 
-                val callbackFunction: (CredentialResponse) -> Unit = { response ->
-                    Logger.d("initializeGoogleSignIn: callbackFunction")
-                    isGoogleClientInitialized = true
-
-                    // Get the credential (JWT token) from the response,
-                    // credential:  this field is the ID token as a base64-encoded JSON Web Token (JWT) string
-                    val credential = response.credential
-                    if (!credential.isNullOrEmpty()) {
-                        onSuccess(credential)
-                    } else {
-                        onError?.invoke()
-                    }
-                }
-
-                val config = googleIdConfig(clientId, callbackFunction)
-                google.accounts.id.initialize(config)
-
-                addGoogleSignInButton()
-
-                renderGoogleSignInButton(
-                    containerId = GOOGLE_BUTTON_ID,
-                    theme = "outline",
-                    size = "large"
-                )
+                initializeGoogleAccountId(onSuccess, onError, clientId)
 
             } catch (e: dynamic) {
                 console.error("Google Sign-In initialization failed: $e")
@@ -159,7 +154,30 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
     }
 
-    private fun promptGoogleSignIn() {
+    private fun initializeGoogleAccountId(
+        onSuccess: (String) -> Unit,
+        onError: (() -> Unit)? = null,
+        clientId: String
+    ) {
+        val callbackFunction: (CredentialResponse) -> Unit = { response ->
+            Logger.d("initializeGoogleAccountId: callbackFunction")
+            isGoogleClientInitialized = true
+
+            // Get the credential (JWT token) from the response,
+            // credential:  this field is the ID token as a base64-encoded JSON Web Token (JWT) string
+            val credential = response.credential
+            if (!credential.isNullOrEmpty()) {
+                onSuccess(credential)
+            } else {
+                onError?.invoke()
+            }
+        }
+
+        val config = googleIdConfig(clientId, callbackFunction)
+        google.accounts.id.initialize(config)
+    }
+
+    private fun oneTapPromptGoogleSignIn() {
         console.log("promptGoogleSignIn:")
         google.accounts.id.prompt { notification: google.accounts.id.PromptMomentNotification ->
             if (notification.isSkippedMoment() == true) {
@@ -178,37 +196,6 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         }
     }
 
-    private fun addGoogleSignInButton() {
-
-        var alreadyAdded = false
-        val existingScripts = document.body?.getElementsByClassName(GOOGLE_BUTTON_ID)
-        val nodesLength = existingScripts?.length ?: 0
-        for (i in 0 until nodesLength) {
-            if ((existingScripts?.get(i) as HTMLScriptElement).className == GOOGLE_BUTTON_ID) {
-                alreadyAdded = true
-            }
-        }
-
-        if (alreadyAdded) return
-        val gIdOnloadDiv = document.createElement("div") as HTMLElement
-        gIdOnloadDiv.style.display = "none" //for hiding it from page
-        gIdOnloadDiv.id = GOOGLE_BUTTON_ID
-        gIdOnloadDiv.className = GOOGLE_BUTTON_ID
-        document.body?.appendChild(gIdOnloadDiv)
-    }
-
-    private fun renderGoogleSignInButton(
-        containerId: String,
-        theme: String = "outline",
-        size: String = "large",
-    ) {
-        val signInButtonWrapper = document.getElementById(containerId) as HTMLElement
-        google.accounts.id.renderButton(
-            signInButtonWrapper,
-            gsiButtonConfig(theme, size)
-        )
-    }
-
     private fun decodeJwtPayload(jwt: String): JsonElement? {
         // JWTs are Base64URL encoded. Split the token and decode the payload part.
         return try {
@@ -221,13 +208,118 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         }
     }
 
-    override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
-        this.onSignResult = onSignResult
-        promptGoogleSignIn()
+    override suspend fun signIn(
+        onSignResult: (KMAuthUser?, Throwable?) -> Unit
+    ) {
+        signInCore(onSignResult = onSignResult, scopes = Scopes.defaultScopes)
+    }
+
+    override suspend fun signIn(): Result<KMAuthUser?> {
+        return suspendCancellableCoroutine { continuation ->
+            signInCore(continuation = continuation, scopes = Scopes.defaultScopes)
+        }
+    }
+
+    private fun signInCore(
+        continuation: CancellableContinuation<Result<KMAuthUser?>>? = null,
+        onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null,
+        scopes: List<String>
+    ) {
+        val callbackFunction: (TokenResponse) -> Unit = { response ->
+            Logger.d("initTokenClient: callbackFunction")
+
+            val accessToken = response.access_token
+            val error = response.error
+            if (error != null) {
+                continuation?.resume(Result.failure(Exception("Failed to get access token: $error")))
+                onSignResult?.invoke(null, Exception("Failed to get access token: $error"))
+            } else {
+
+                if (!accessToken.isNullOrEmpty()) {
+
+                    val context = continuation?.context ?: Dispatchers.Default
+                    CoroutineScope(context).launch {
+                        val userInfo = getGoogleUserJsInfo(accessToken)
+                        if (userInfo?.id != null) {
+                            val user = KMAuthUser(
+                                id = userInfo.id!!,
+                                name = userInfo.name,
+                                email = userInfo.email,
+                                accessToken = accessToken,
+                                profilePicUrl = userInfo.picture
+                            )
+                            continuation?.resume(Result.success(user))
+                            onSignResult?.invoke(user, null)
+                        } else {
+                            continuation?.resume(Result.failure(Exception("Failed to get user info")))
+                            onSignResult?.invoke(null, Exception("Failed to get user info"))
+                        }
+                    }
+                } else {
+                    continuation?.resume(Result.failure(Exception("Access token is empty")))
+                    onSignResult?.invoke(null, Exception("Access token is empty"))
+                }
+            }
+        }
+
+        val config: TokenClientConfig = tokenClientConfig(
+            clientId = webClientId,
+            scope = scopes.joinToString(" "),
+            callback = callbackFunction
+        )
+
+        val client = google.accounts.oauth2.initTokenClient(
+            config
+        )
+
+        val overrideConfig = overrideTokenClientConfig(
+            scope = scopes.joinToString(" "),
+            includeGrantedScopes = true,
+            prompt = GoogleTokenClientConfigPrompt.SELECT_ACCOUNT.value,
+        )
+
+        //Use the requestAccessToken() method to trigger the token UX flow and obtain an access token. Google prompts the user to:
+        //Choose their account,
+        //sign-in to the Google Account if not already signed-in,
+        //grant consent for your web app to access each requested scope.
+        client.requestAccessToken(overrideConfig)
     }
 
     override suspend fun signOut(userId: String?) {
         google.accounts.id.disableAutoSelect()
+        this.onSignResult = null
+    }
+
+    private suspend fun getGoogleUserJsInfo(accessToken: String): GoogleUserJs? {
+        try {
+
+            val url = "https://www.googleapis.com/oauth2/v2/userinfo"
+            val headers = Headers()
+            headers.append("Content-Type", "application/json")
+            headers.append("Authorization", "Bearer $accessToken")
+
+            val response: Response = window.fetch(
+                url,
+                RequestInit(
+                    method = "GET",
+                    headers = headers,
+                    mode = RequestMode.CORS
+                )
+            ).await()
+
+            if (!response.ok) {
+                val error = response.statusText
+                Logger.e("Failed to get user info: $error")
+                return null
+            }
+            return convertToGoogleUserInfo(response.json().await<dynamic>())
+
+            //This will not work here
+            //return Json.decodeFromString<GoogleUser>(response.json().await<dynamic>())
+        } catch (e: Exception) {
+            Logger.e("Exception in getGoogleUserJsInfo", e)
+            return null
+        }
     }
 
     companion object {

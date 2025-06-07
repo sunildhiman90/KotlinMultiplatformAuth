@@ -54,15 +54,26 @@ fun App() {
                 ) {
                     Button(onClick = {
                         scope.launch {
-                            googleAuthManager.signIn { user, error ->
-                                if (error != null) {
-                                    println("Error in google Sign In: $error")
-                                }
-                                if (user != null) {
-                                    println("Login Successful user: $user")
-                                    userName = user.name
-                                }
+
+                            //Without callback, Recommended way
+                            val result = googleAuthManager.signIn()
+                            if (result.isSuccess) {
+                                println("Login Successful user: ${result.getOrNull()}")
+                                userName = result.getOrNull()?.name
+                            } else {
+                                println("Error in google Sign In: ${result.exceptionOrNull()}")
                             }
+
+                            //Using callback
+//                            googleAuthManager.signIn { user, error ->
+//                                if (error != null) {
+//                                    println("Error in google Sign In: $error")
+//                                }
+//                                if (user != null) {
+//                                    println("Login Successful user: $user")
+//                                    userName = user.name
+//                                }
+//                            }
                         }
                     }) {
                         Text("Google Sign In")

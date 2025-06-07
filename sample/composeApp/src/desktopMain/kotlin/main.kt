@@ -5,7 +5,7 @@ import com.sunildhiman90.kmauth.core.KMAuthInitializer
 fun main() = application {
 
     KMAuthInitializer.initClientSecret(
-        clientSecret = "YOUR_OAUTH_CLIENT_SECRET",
+        clientSecret = "YOUR_CLIENT_SECRET",
     )
 
     Window(

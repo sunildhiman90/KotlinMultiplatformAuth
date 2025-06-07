@@ -10,6 +10,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.NoCredentialException
+import co.touchlab.kermit.Logger
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -17,6 +18,11 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthPlatformContext
 import com.sunildhiman90.kmauth.core.KMAuthUser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 
 internal class GoogleAuthManagerAndroid : GoogleAuthManager {
@@ -32,13 +38,13 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         require(kmAuthPlatformContext?.context != null) {
             val message =
                 "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::init"
-            co.touchlab.kermit.Logger.withTag(TAG).e(message)
+            Logger.withTag(TAG).e(message)
             message
         }
         require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
             val message =
                 "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
-            co.touchlab.kermit.Logger.withTag(TAG).e(message)
+            Logger.withTag(TAG).e(message)
             message
         }
 
@@ -49,6 +55,10 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
     }
 
     override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
+        signInCore(onSignResult)
+    }
+
+    private fun signInCore(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
         try {
 
             // For popup view, we can use GetSignInWithGoogleOption, Otherwise we can GetGoogleIdOption for bottom sheet
@@ -64,20 +74,35 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
 
         } catch (e: Exception) {
             e.printStackTrace()
-            co.touchlab.kermit.Logger.withTag(TAG).e("google signIn failed: $e")
+            Logger.withTag(TAG).e("google signIn failed: $e")
             if (e is NoCredentialException) {
                 // User has not signed in yet with any account, shop popup Google Sign In
-                val getSignInWithGoogleOption: GetSignInWithGoogleOption = GetSignInWithGoogleOption.Builder(webClientId)
-                    .build()
+                val getSignInWithGoogleOption: GetSignInWithGoogleOption =
+                    GetSignInWithGoogleOption.Builder(webClientId)
+                        .build()
                 triggerSignIn(getSignInWithGoogleOption, onSignResult)
             } else {
                 onSignResult(null, e)
             }
         }
-
     }
 
-    private suspend fun triggerSignIn(
+    override suspend fun signIn(): Result<KMAuthUser?> {
+        return suspendCancellableCoroutine { continuation ->
+            val onSignResult: (KMAuthUser?, Throwable?) -> Unit = { user, error ->
+                if (error == null) {
+                    // Resume coroutine with an exception provided by the callback
+                    continuation.resume(Result.success(user))
+                } else {
+                    // Resume coroutine with a value provided by the callback
+                    continuation.resume(Result.failure(Exception("Error in google Sign In: $error")))
+                }
+            }
+            signInCore(onSignResult)
+        }
+    }
+
+    private fun triggerSignIn(
         credentialOption: CredentialOption,
         onSignResult: (KMAuthUser?, Throwable?) -> Unit
     ) {
@@ -85,12 +110,15 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
             .addCredentialOption(credentialOption)
             .build()
 
-        // Use an activity-based context to avoid undefined system UI launching behavior.
-        val result: GetCredentialResponse = credentialManager.getCredential(
-            context = context,
-            request = request
-        )
-        onSignResult(handleSignIn(result), null)
+        val scope = CoroutineScope(Dispatchers.IO)
+        scope.launch {
+            // Use an activity-based context to avoid undefined system UI launching behavior.
+            val result: GetCredentialResponse = credentialManager.getCredential(
+                context = context,
+                request = request
+            )
+            onSignResult(handleSignIn(result), null)
+        }
     }
 
     private fun handleSignIn(result: GetCredentialResponse): KMAuthUser? {
@@ -118,19 +146,20 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
                             profilePicUrl = googleIdTokenCredential.profilePictureUri.toString()
                         )
                     } catch (e: GoogleIdTokenParsingException) {
-                        co.touchlab.kermit.Logger.withTag(TAG).e("Received an invalid google id token response: $e")
+                        Logger.withTag(TAG)
+                            .e("Received an invalid google id token response: $e")
                         null
                     }
                 } else {
                     // Catch any unrecognized custom credential type here.
-                    co.touchlab.kermit.Logger.withTag(TAG).e( "Unexpected type of credential")
+                    Logger.withTag(TAG).e("Unexpected type of credential")
                     null
                 }
             }
 
             else -> {
                 // Catch any unrecognized credential type here.
-                co.touchlab.kermit.Logger.withTag(TAG).e("Unexpected type of credential")
+                Logger.withTag(TAG).e("Unexpected type of credential")
                 null
             }
         }
@@ -140,7 +169,7 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
         } catch (e: Exception) {
-            co.touchlab.kermit.Logger.withTag(TAG).e { "Exception in google signOut failed: $e" }
+            Logger.withTag(TAG).e { "Exception in google signOut failed: $e" }
         }
     }
 

@@ -51,7 +51,7 @@ Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontal
     val scope = rememberCoroutineScope()
     Button(onClick = {
         scope.launch {
-            //Without callback, Recommended way
+            //Without callback, Recommended way, available after 0.2.0
             val result = googleAuthManager.signIn()
             if (result.isSuccess) {
                 println("Login Successful user: ${result.getOrNull()}")

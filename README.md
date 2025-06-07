@@ -5,7 +5,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.sunildhiman90/kmauth-google?color=blue)](https://central.sonatype.com/search?q=io.github.sunildhiman90+kmauth&smo=true)
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Kotlin Multiplatform Authentication library targeting Android, iOS, Desktop and Web(Kotlin/Js only).
+Kotlin Multiplatform Authentication library targeting Android, iOS, Desktop and Web(Kotlin/Js and Kotlin/Wasm Both).
 Currently
 supports Sign In with Google. Planning to add other providers in the future.
 
@@ -278,7 +278,7 @@ KMAuthInitializer.initClientSecret(
 ```
 2. You also need to make sure you have added the redirect url in web client in google cloud platform oauth clients in **Authorized redirect URIs**: http://localhost:8080/callback, And this may take some time to reflect updates in your code while running your code.
 
-#### Web (Kotlin/Js)
+#### Web (Kotlin/Js and Kotlin/Wasm)
 
 You need to call the
 MAuthInitializer.init method with webClientId if you are not using Alternative Way mentioned in
@@ -294,7 +294,7 @@ Google Cloud Platform Console for web auth client, Otherwise you will get this e
 For example if you are running on localhost:8080, add this: http://localhost:8080, IN case of your production url you need to add your prod url.
 
 ## Contributions
-Feel free to contribute if you finds any issues or bugs or want to add a new auth provider support. Future plans are to add WasmJs support and other providers as well such as Facebook, Github and Apple Login.
+Feel free to contribute if you finds any issues or bugs or want to add a new auth provider support. Future plans are to add other providers as well such as Facebook, Github and Apple Login.
 
 ## Used By Projects List
 Checkout a voluntary list of projects/companies using KotlinMultiplatformAuth: https://github.com/sunildhiman90/KotlinMultiplatformAuth/discussions/3. Feel free to add your project!

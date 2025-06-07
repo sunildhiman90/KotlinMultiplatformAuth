@@ -29,15 +29,15 @@ import org.w3c.dom.events.Event
 import org.w3c.dom.get
 import org.w3c.fetch.CORS
 import org.w3c.fetch.Headers
-import org.w3c.fetch.RequestInit
 import org.w3c.fetch.RequestMode
 import org.w3c.fetch.Response
 import kotlin.coroutines.resume
 
+
 const val GSI_CLIENT_URL = "https://accounts.google.com/gsi/client"
 const val GOOGLE_BUTTON_ID = "gid"
 
-internal class GoogleAuthManagerJs : GoogleAuthManager {
+internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
     private var isLibraryLoaded: Boolean = false
     private var isGoogleClientInitialized: Boolean = false
@@ -57,7 +57,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         webClientId = KMAuthInitializer.getWebClientId()!!
 
         loadGoogleSignInLibrary {
-            console.log("Google sign in library loaded")
+            Logger.d("Google sign in library loaded")
             isLibraryLoaded = true
 
             //for one tap prompt
@@ -124,28 +124,27 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         onError: (() -> Unit)? = null
     ) {
 
-        console.info("initializeGoogleSignIn")
+        Logger.i("initializeGoogleSignIn")
 
         require(clientId.isNotEmpty()) {
             val error = "clientId should not be null or empty"
-            console.log(error)
+            Logger.d(error)
             error
         }
 
         check(isLibraryLoaded) {
             val error = "Google sign in library is not loaded"
-            console.log(error)
+            Logger.d(error)
             error
         }
+
 
         if (isLibraryLoaded) {
 
             try {
-
                 initializeGoogleAccountId(onSuccess, onError, clientId)
-
-            } catch (e: dynamic) {
-                console.error("Google Sign-In initialization failed: $e")
+            } catch (e: Exception) {
+                Logger.e("Google Sign-In initialization failed: $e")
                 isGoogleClientInitialized = false
                 onError?.invoke()
             }
@@ -178,10 +177,10 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
     }
 
     private fun oneTapPromptGoogleSignIn() {
-        console.log("promptGoogleSignIn:")
+        Logger.d("promptGoogleSignIn:")
         google.accounts.id.prompt { notification: google.accounts.id.PromptMomentNotification ->
             if (notification.isSkippedMoment() == true) {
-                console.info("promptGoogleSignIn one tap isNotDisplayed_or_isSkipped:")
+                Logger.i("promptGoogleSignIn one tap isNotDisplayed_or_isSkipped:")
                 //trigger rendered button click
                 document.getElementById(GOOGLE_BUTTON_ID)
                     ?.querySelector("div[role='button']")
@@ -191,7 +190,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             }
             if (notification.isDismissedMoment() == true) {
                 //if "credential_returned", it means user has already signed in successfully
-                console.info("promptGoogleSignIn callback dismissed_reason: ${notification.getDismissedReason()}")
+                Logger.i("promptGoogleSignIn callback dismissed_reason: ${notification.getDismissedReason()}")
             }
         }
     }
@@ -203,7 +202,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             val decodedPayload = window.atob(payload) // Decode Base64URL to a string
             Json.parseToJsonElement(decodedPayload)
         } catch (e: Exception) {
-            console.error("Failed to decode JWT payload", e)
+            Logger.e("Failed to decode JWT payload", e)
             null
         }
     }
@@ -290,6 +289,8 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         this.onSignResult = null
     }
 
+    // Official RequestInit issue: https://github.com/Kotlin/kotlinx-browser/issues/17
+    // So using our custom RequestInit, But Official RequestInit working fine in JS, becoz there its being used from dom, but here kotlinx-browser
     private suspend fun getGoogleUserJsInfo(accessToken: String): GoogleUserJs? {
         try {
 
@@ -300,7 +301,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
             val response: Response = window.fetch(
                 url,
-                RequestInit(
+                com.sunildhiman90.kmauth.google.jsUtils.RequestInit(
                     method = "GET",
                     headers = headers,
                     mode = RequestMode.CORS
@@ -312,21 +313,19 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
                 Logger.e("Failed to get user info: $error")
                 return null
             }
-            return convertToGoogleUserInfo(response.json().await<dynamic>())
+            return convertToGoogleUserInfo(response.json().await<JsAny>())
 
             //This will not work here
-            //return Json.decodeFromString<GoogleUser>(response.json().await<dynamic>())
-        } catch (e: Exception) {
+            //return Json.decodeFromString<GoogleUser>(response.json().await<JsAny>())
+        } catch (e: JsException) {
             Logger.e("Exception in getGoogleUserJsInfo", e)
             return null
         }
     }
 
     companion object {
-        private const val TAG = "GoogleAuthManagerJs"
+        private const val TAG = "GoogleAuthManagerWasmJs"
     }
 
 }
-
-
 

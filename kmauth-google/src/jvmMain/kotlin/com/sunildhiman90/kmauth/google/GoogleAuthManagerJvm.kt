@@ -30,7 +30,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
 import java.io.File
@@ -39,6 +41,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.UUID
+import kotlin.coroutines.resume
 import kotlin.jvm.java
 
 
@@ -82,9 +85,33 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
         launchGoogleSignIn()
     }
 
+    override suspend fun signIn(): Result<KMAuthUser?> {
+        return suspendCancellableCoroutine { continuation ->
+            val onSignResult: (KMAuthUser?, Throwable?) -> Unit = { user, error ->
+                if (error == null) {
+                    // Resume coroutine with an exception provided by the callback
+                    continuation.resume(Result.success(user))
+                } else {
+                    // Resume coroutine with a value provided by the callback
+                    continuation.resume(Result.failure(Exception("Error in google Sign In: $error")))
+                }
+            }
+
+            launchGoogleSignIn(onSignResult)
+
+            continuation.invokeOnCancellation {
+                performShutdownCleanup()
+            }
+        }
+    }
+
     // Start the Ktor HTTP server to handle the OAuth redirect response
     @OptIn(DelicateCoroutinesApi::class)
-    private fun startHttpServer(flow: GoogleAuthorizationCodeFlow, port: Int = 8080): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
+    private fun startHttpServer(
+        flow: GoogleAuthorizationCodeFlow,
+        onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null,
+        port: Int = 8080
+    ): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
         Logger.d("Starting HTTP server on port $port")
         val server = embeddedServer(Netty, port = port) {
             install(ContentNegotiation) {
@@ -120,7 +147,8 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                             val userInfoString = response.parseAsString()
                             val userInfo = Gson().fromJson(userInfoString, GoogleUser::class.java)
 
-                            onSignResult?.invoke(
+                            val callback = onSignResult ?: this@GoogleAuthManagerJvm.onSignResult
+                            callback?.invoke(
                                 KMAuthUser(
                                     id = userInfo.id,
                                     idToken = tokenResponse.idToken,
@@ -180,7 +208,9 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
         }
     }
 
-    private fun launchGoogleSignIn() {
+    private fun launchGoogleSignIn(
+        onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
+    ) {
 
         try {
             // We are using google-api-client, alternatively we can use core oauth2 url as well i.e.
@@ -204,7 +234,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             // We need to reinitialize the scope, otherwise it will throw exception second time becoz we are cancelling the scope after stopping the server and cancelled scope can not be used to launch coroutine again without recreating new scope
             scope = CoroutineScope(Dispatchers.IO)
             scope.launch {
-                server = startHttpServer(flow)
+                server = startHttpServer(flow, onSignResult)
             }
         } catch (e: Exception) {
             e.printStackTrace()

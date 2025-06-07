@@ -29,7 +29,7 @@ external interface CredentialResponse {
 external interface TokenResponse {
     var access_token: String?
     var id_token: String?
-    var expires_in: Number?
+    var expires_in: JsNumber?
     var scope: String?
     var token_type: String?
     var error: String?
@@ -88,7 +88,6 @@ external object google {
         }
     }
 }
-
 
 external interface GoogleUserJs {
     val id: String?

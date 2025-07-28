@@ -9,6 +9,7 @@ import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import co.touchlab.kermit.Logger
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -18,6 +19,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthPlatformContext
 import com.sunildhiman90.kmauth.core.KMAuthUser
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,21 +71,42 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
                 .setAutoSelectEnabled(false)
                 .build()
 
-            // User have signed in with some account, shop one tap bottom sheet
-            triggerSignIn(googleIdOption, onSignResult)
+            val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+                Logger.withTag(TAG).i("CoroutineExceptionHandler:google signIn failed: $exception")
+                if (exception is NoCredentialException) {
+                    // User has not signed in yet with any account, show popup Google Sign In
+                    val getSignInWithGoogleOption: GetSignInWithGoogleOption =
+                        GetSignInWithGoogleOption.Builder(webClientId)
+                            .build()
+
+                    val innerExceptionHandler = CoroutineExceptionHandler { _, innerException ->
+                        Logger.withTag(TAG).e("innerExceptionHandler:google signIn failed: $innerException")
+                        if (innerException is NoCredentialException) {
+                            Logger.withTag(TAG).e("innerExceptionHandler:Make sure you have the latest version of google play services installed: $innerException")
+                        }
+                        onSignResult(null, innerException)
+                    }
+                    val scope = CoroutineScope(Dispatchers.IO + innerExceptionHandler)
+                    scope.launch {
+                        triggerSignIn(getSignInWithGoogleOption, onSignResult)
+                    }
+                } else {
+                    exception.printStackTrace()
+                    Logger.withTag(TAG).e("google signIn failed: $exception")
+                    onSignResult(null, exception)
+                }
+            }
+
+            val scope = CoroutineScope(Dispatchers.IO + exceptionHandler)
+            scope.launch {
+                // if User have signed in with some account, shop one tap bottom sheet
+                triggerSignIn(googleIdOption, onSignResult)
+            }
 
         } catch (e: Exception) {
             e.printStackTrace()
             Logger.withTag(TAG).e("google signIn failed: $e")
-            if (e is NoCredentialException) {
-                // User has not signed in yet with any account, shop popup Google Sign In
-                val getSignInWithGoogleOption: GetSignInWithGoogleOption =
-                    GetSignInWithGoogleOption.Builder(webClientId)
-                        .build()
-                triggerSignIn(getSignInWithGoogleOption, onSignResult)
-            } else {
-                onSignResult(null, e)
-            }
+            onSignResult(null, e)
         }
     }
 
@@ -102,7 +125,7 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
         }
     }
 
-    private fun triggerSignIn(
+    private suspend fun triggerSignIn(
         credentialOption: CredentialOption,
         onSignResult: (KMAuthUser?, Throwable?) -> Unit
     ) {
@@ -110,15 +133,13 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
             .addCredentialOption(credentialOption)
             .build()
 
-        val scope = CoroutineScope(Dispatchers.IO)
-        scope.launch {
-            // Use an activity-based context to avoid undefined system UI launching behavior.
-            val result: GetCredentialResponse = credentialManager.getCredential(
-                context = context,
-                request = request
-            )
-            onSignResult(handleSignIn(result), null)
-        }
+        // Use an activity-based context to avoid undefined system UI launching behavior.
+        val result: GetCredentialResponse = credentialManager.getCredential(
+            context = context,
+            request = request
+        )
+        onSignResult(handleSignIn(result), null)
+
     }
 
     private fun handleSignIn(result: GetCredentialResponse): KMAuthUser? {

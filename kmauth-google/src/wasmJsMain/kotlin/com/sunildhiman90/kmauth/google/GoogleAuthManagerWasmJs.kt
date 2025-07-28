@@ -15,6 +15,7 @@ import com.sunildhiman90.kmauth.google.jsUtils.tokenClientConfig
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
@@ -236,8 +237,12 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
                 if (!accessToken.isNullOrEmpty()) {
 
+                    val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+                        continuation?.resume(Result.failure(exception))
+                        onSignResult?.invoke(null, exception)
+                    }
                     val context = continuation?.context ?: Dispatchers.Default
-                    CoroutineScope(context).launch {
+                    CoroutineScope(context + coroutineExceptionHandler).launch {
                         val userInfo = getGoogleUserJsInfo(accessToken)
                         if (userInfo?.id != null) {
                             val user = KMAuthUser(

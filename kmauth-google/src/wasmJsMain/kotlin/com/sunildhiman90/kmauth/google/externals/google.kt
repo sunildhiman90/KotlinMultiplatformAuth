@@ -28,7 +28,6 @@ external interface CredentialResponse {
 //https://developers.google.com/identity/oauth2/web/reference/js-reference#TokenResponse
 external interface TokenResponse {
     var access_token: String?
-    var id_token: String?
     var expires_in: JsNumber?
     var scope: String?
     var token_type: String?

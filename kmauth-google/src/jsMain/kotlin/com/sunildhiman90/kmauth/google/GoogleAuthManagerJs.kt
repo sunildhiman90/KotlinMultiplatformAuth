@@ -10,11 +10,13 @@ import com.sunildhiman90.kmauth.google.externals.TokenResponse
 import com.sunildhiman90.kmauth.google.externals.google
 import com.sunildhiman90.kmauth.google.jsUtils.convertToGoogleUserInfo
 import com.sunildhiman90.kmauth.google.jsUtils.googleIdConfig
+import com.sunildhiman90.kmauth.google.jsUtils.gsiButtonConfig
 import com.sunildhiman90.kmauth.google.jsUtils.overrideTokenClientConfig
 import com.sunildhiman90.kmauth.google.jsUtils.tokenClientConfig
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
@@ -24,6 +26,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLScriptElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.get
@@ -44,6 +47,8 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
     private var webClientId: String
 
     private var onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
+    private var continuation: CancellableContinuation<Result<KMAuthUser?>>? = null
+
 
     init {
 
@@ -62,35 +67,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
             //for one tap prompt
             initializeGoogleSignIn(
-                webClientId,
-                onError = {
-                    Logger.i("initializeGoogleSignIn: onError")
-                    onSignResult?.invoke(null, Exception("Google sign in failed"))
-                },
-                onSuccess = { credential ->
-                    Logger.i("initializeGoogleSignIn: onSuccess")
-                    // Decode the JWT token to get the user's information
-                    val userInfo = decodeJwtPayload(credential)?.jsonObject
-
-                    if (userInfo != null) {
-                        val sub = userInfo["sub"]?.jsonPrimitive
-                        val name = userInfo["name"]?.jsonPrimitive
-                        val email = userInfo["email"]?.jsonPrimitive
-                        val picture = userInfo["picture"]?.jsonPrimitive
-
-                        onSignResult?.invoke(
-                            KMAuthUser(
-                                id = sub?.content ?: "",
-                                idToken = credential,
-                                name = name?.content ?: "",
-                                email = email?.content ?: "",
-                                profilePicUrl = picture?.content ?: ""
-                            ), null
-                        )
-                    } else {
-                        onSignResult?.invoke(null, Exception("Google sign in failed"))
-                    }
-                },
+                webClientId
             )
         }
     }
@@ -120,8 +97,6 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
     private fun initializeGoogleSignIn(
         clientId: String,
-        onSuccess: (String) -> Unit,
-        onError: (() -> Unit)? = null
     ) {
 
         console.info("initializeGoogleSignIn")
@@ -142,12 +117,11 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
             try {
 
-                initializeGoogleAccountId(onSuccess, onError, clientId)
+                initializeGoogleAccountId(clientId)
 
             } catch (e: dynamic) {
                 console.error("Google Sign-In initialization failed: $e")
                 isGoogleClientInitialized = false
-                onError?.invoke()
             }
 
         }
@@ -155,8 +129,6 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
     }
 
     private fun initializeGoogleAccountId(
-        onSuccess: (String) -> Unit,
-        onError: (() -> Unit)? = null,
         clientId: String
     ) {
         val callbackFunction: (CredentialResponse) -> Unit = { response ->
@@ -167,14 +139,39 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             // credential:  this field is the ID token as a base64-encoded JSON Web Token (JWT) string
             val credential = response.credential
             if (!credential.isNullOrEmpty()) {
-                onSuccess(credential)
+                Logger.i("initializeGoogleSignIn: onSuccess")
+                // Decode the JWT token to get the user's information
+                val userInfo = decodeJwtPayload(credential)?.jsonObject
+
+                if (userInfo != null) {
+                    val sub = userInfo["sub"]?.jsonPrimitive
+                    val name = userInfo["name"]?.jsonPrimitive
+                    val email = userInfo["email"]?.jsonPrimitive
+                    val picture = userInfo["picture"]?.jsonPrimitive
+                    val user = KMAuthUser(
+                        id = sub?.content ?: "",
+                        idToken = credential,
+                        name = name?.content ?: "",
+                        email = email?.content ?: "",
+                        profilePicUrl = picture?.content ?: ""
+                    )
+
+                    continuation?.resume(Result.success(user))
+                    onSignResult?.invoke(user, null)
+                } else {
+                    onSignResult?.invoke(null, Exception("Google sign in failed"))
+                }
             } else {
-                onError?.invoke()
+                continuation?.resume(Result.failure(Exception("Google sign in failed")))
+                onSignResult?.invoke(null, Exception("Google sign in failed"))
             }
         }
 
         val config = googleIdConfig(clientId, callbackFunction)
         google.accounts.id.initialize(config)
+
+        addGoogleSignInButton()
+        renderGoogleSignInButton(GOOGLE_BUTTON_ID)
     }
 
     private fun oneTapPromptGoogleSignIn() {
@@ -183,11 +180,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             if (notification.isSkippedMoment() == true) {
                 console.info("promptGoogleSignIn one tap isNotDisplayed_or_isSkipped:")
                 //trigger rendered button click
-                document.getElementById(GOOGLE_BUTTON_ID)
-                    ?.querySelector("div[role='button']")
-                    ?.dispatchEvent(
-                        Event("click")
-                    )
+                triggerSignInUsingButton()
             }
             if (notification.isDismissedMoment() == true) {
                 //if "credential_returned", it means user has already signed in successfully
@@ -196,6 +189,15 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         }
     }
 
+    private fun triggerSignInUsingButton() {
+        document.getElementById(GOOGLE_BUTTON_ID)
+            ?.querySelector("div[role='button']")
+            ?.dispatchEvent(
+                Event("click")
+            )
+    }
+
+
     private fun decodeJwtPayload(jwt: String): JsonElement? {
         // JWTs are Base64URL encoded. Split the token and decode the payload part.
         return try {
@@ -203,7 +205,7 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
             val decodedPayload = window.atob(payload) // Decode Base64URL to a string
             Json.parseToJsonElement(decodedPayload)
         } catch (e: Exception) {
-            console.error("Failed to decode JWT payload", e)
+            Logger.e("Failed to decode JWT payload", e)
             null
         }
     }
@@ -211,16 +213,16 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
     override suspend fun signIn(
         onSignResult: (KMAuthUser?, Throwable?) -> Unit
     ) {
-        signInCore(onSignResult = onSignResult, scopes = Scopes.defaultScopes)
+        signInCoreUsingButton(onSignResult = onSignResult)
     }
 
     override suspend fun signIn(): Result<KMAuthUser?> {
         return suspendCancellableCoroutine { continuation ->
-            signInCore(continuation = continuation, scopes = Scopes.defaultScopes)
+            signInCoreUsingButton(continuation = continuation)
         }
     }
 
-    private fun signInCore(
+    private fun signInCoreWithOAuth2(
         continuation: CancellableContinuation<Result<KMAuthUser?>>? = null,
         onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null,
         scopes: List<String>
@@ -237,8 +239,12 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
 
                 if (!accessToken.isNullOrEmpty()) {
 
+                    val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+                        continuation?.resume(Result.failure(exception))
+                        onSignResult?.invoke(null, exception)
+                    }
                     val context = continuation?.context ?: Dispatchers.Default
-                    CoroutineScope(context).launch {
+                    CoroutineScope(context + coroutineExceptionHandler).launch {
                         val userInfo = getGoogleUserJsInfo(accessToken)
                         if (userInfo?.id != null) {
                             val user = KMAuthUser(
@@ -285,9 +291,52 @@ internal class GoogleAuthManagerJs : GoogleAuthManager {
         client.requestAccessToken(overrideConfig)
     }
 
+    private fun signInCoreUsingButton(
+        continuation: CancellableContinuation<Result<KMAuthUser?>>? = null,
+        onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null,
+    ) {
+        this.onSignResult = onSignResult
+        this.continuation = continuation
+        triggerSignInUsingButton()
+    }
+
+    private fun addGoogleSignInButton() {
+
+        var alreadyAdded = false
+        val existingScripts = document.body?.getElementsByClassName(GOOGLE_BUTTON_ID)
+        val nodesLength = existingScripts?.length ?: 0
+        for (i in 0 until nodesLength) {
+            if ((existingScripts?.get(i) as HTMLScriptElement).className == GOOGLE_BUTTON_ID) {
+                alreadyAdded = true
+            }
+        }
+
+        if (alreadyAdded) return
+        val gIdOnloadDiv = document.createElement("div") as HTMLElement
+        gIdOnloadDiv.style.display = "none" //for hiding it from page
+        gIdOnloadDiv.id = GOOGLE_BUTTON_ID
+        gIdOnloadDiv.className = GOOGLE_BUTTON_ID
+        document.body?.appendChild(gIdOnloadDiv)
+    }
+
+    private fun renderGoogleSignInButton(
+        containerId: String,
+        theme: String = "outline",
+        size: String = "large",
+    ) {
+        val signInButtonWrapper = document.getElementById(containerId) as HTMLElement
+        google.accounts.id.renderButton(
+            signInButtonWrapper,
+            gsiButtonConfig(theme, size)
+        )
+    }
+
+
     override suspend fun signOut(userId: String?) {
         google.accounts.id.disableAutoSelect()
         this.onSignResult = null
+        this.continuation?.cancel()
+        this.continuation = null
     }
 
     private suspend fun getGoogleUserJsInfo(accessToken: String): GoogleUserJs? {

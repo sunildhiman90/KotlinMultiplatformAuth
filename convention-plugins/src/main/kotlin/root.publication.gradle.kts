@@ -5,5 +5,5 @@ plugins {
 // these will be used for all projects ie. kmauth-core, kmauth-google etc.
 allprojects {
     group = "io.github.sunildhiman90"
-    version = "0.2.0"
+    version = "0.2.1"
 }

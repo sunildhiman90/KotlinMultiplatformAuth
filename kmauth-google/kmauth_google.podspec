@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'kmauth_google'
-    spec.version                  = '0.2.0'
+    spec.version                  = '0.2.1'
     spec.homepage                 = ''
     spec.source                   = { :http=> ''}
     spec.authors                  = ''

@@ -1,12 +1,12 @@
 package com.sunildhiman90.kmauth.supabase
 
 import com.sunildhiman90.kmauth.core.KMAuthConfig
+import com.sunildhiman90.kmauth.supabase.model.SupabaseExternalAuthConfig
 import com.sunildhiman90.kmauth.supabase.model.SupabaseUser
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.ExternalAuthConfig
-import io.github.jan.supabase.auth.providers.OAuthProvider
+import com.sunildhiman90.kmauth.supabase.model.SupabaseOAuthProvider
 import io.github.jan.supabase.createSupabaseClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,9 +50,9 @@ class SupabaseAuthManager(
      * @param config Additional configuration for the sign-in process.
      */
     suspend fun signIn(
-        provider: OAuthProvider,
+        provider: SupabaseOAuthProvider,
         onSignResult: (SupabaseUser?, Throwable?) -> Unit,
-        config: ExternalAuthConfig.() -> Unit = {}
+        config: () -> SupabaseExternalAuthConfig = { SupabaseExternalAuthConfig() }
     ) {
         launch {
             try {
@@ -71,14 +71,20 @@ class SupabaseAuthManager(
      * @return A [Result] containing the authenticated user or an exception.
      */
 
-    suspend fun signIn(provider: OAuthProvider, config: ExternalAuthConfig.() -> Unit = {} ): Result<SupabaseUser?> = runCatching {
+    suspend fun signIn(
+        provider: SupabaseOAuthProvider,
+        config: () -> SupabaseExternalAuthConfig = { SupabaseExternalAuthConfig() }
+    ): Result<SupabaseUser?> = runCatching {
         if (redirectUrl != null) {
-            supabaseClient.auth.signInWith(provider, redirectUrl = this@SupabaseAuthManager.redirectUrl) {
-                config()
+            supabaseClient.auth.signInWith(
+                provider.toOAuthProvider(),
+                redirectUrl = this@SupabaseAuthManager.redirectUrl
+            ) {
+                config().toExternalAuthConfig()
             }
         } else {
-            supabaseClient.auth.signInWith(provider) {
-                config()
+            supabaseClient.auth.signInWith(provider.toOAuthProvider()) {
+                config().toExternalAuthConfig()
             }
         }
 

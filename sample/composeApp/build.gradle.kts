@@ -83,6 +83,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(projects.kmauthGoogle) //using TYPESAFE_PROJECT_ACCESSORS
+            implementation(projects.kmauthSupabase) //using TYPESAFE_PROJECT_ACCESSORS
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

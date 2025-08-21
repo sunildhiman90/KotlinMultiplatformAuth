@@ -1,8 +1,10 @@
 package com.sunildhiman90.kmauth.supabase
 
 import com.sunildhiman90.kmauth.core.KMAuthConfig
+import com.sunildhiman90.kmauth.supabase.model.SupabaseExternalAuthConfig
 import com.sunildhiman90.kmauth.supabase.model.SupabaseUser
-import io.github.jan.supabase.auth.providers.OAuthProvider
+import com.sunildhiman90.kmauth.supabase.model.SupabaseOAuthProvider
+import io.github.jan.supabase.auth.providers.OAuthProvider as SupabaseOAuth
 
 /**
  * Main entry point for Supabase authentication.
@@ -47,17 +49,21 @@ object KMAuthSupabase {
      * Extension function to sign in with a provider using the default auth manager.
      */
     suspend fun signInWith(
-        provider: OAuthProvider,
+        provider: SupabaseOAuthProvider,
+        config: () -> SupabaseExternalAuthConfig = { SupabaseExternalAuthConfig() },
         onSignResult: (SupabaseUser?, Throwable?) -> Unit
     ) {
-        getAuthManager().signIn(provider, onSignResult)
+        getAuthManager().signIn(provider = provider , config = config,  onSignResult = onSignResult)
     }
 
     /**
-     * Extension function to sign in with a provider using the default auth manager.
+     * Sign in with a provider using the default auth manager.
      */
-    suspend fun signInWith(provider: OAuthProvider): Result<SupabaseUser?> {
-        return getAuthManager().signIn(provider)
+    suspend fun signInWith(
+        provider: SupabaseOAuthProvider,
+        config: () -> SupabaseExternalAuthConfig = { SupabaseExternalAuthConfig() },
+    ): Result<SupabaseUser?> {
+        return getAuthManager().signIn(provider, config)
     }
 
     /**

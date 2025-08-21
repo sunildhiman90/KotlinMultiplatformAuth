@@ -64,6 +64,7 @@ fun App() {
                                 println("Error in google Sign In: ${result.exceptionOrNull()}")
                             }
 
+
                             //Using callback
 //                            googleAuthManager.signIn { user, error ->
 //                                if (error != null) {

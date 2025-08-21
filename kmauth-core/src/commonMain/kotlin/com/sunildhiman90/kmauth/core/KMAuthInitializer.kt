@@ -5,57 +5,97 @@ package com.sunildhiman90.kmauth.core
  */
 object KMAuthInitializer {
 
-    private var webClientId: String? = null
-    private var clientSecret: String? = null
+    private var config: KMAuthConfig? = null
     private var kmAuthPlatformContext: KMAuthPlatformContext? = null
 
     /**
-     * This method can be used for all platforms for initialization of webClientId.
-     * clientSecret is optional for other platforms except jvm, it will be used only for jvm.
-     * If we don't want to call this method from each platform, we can call initClientSecret(clientSecret: String) method
-     * from jvm source set and KMAuthInitializer.init(webClientId: String) from composable for all platforms.
+     * Initializes the authentication system with the provided configuration.
+     *
+     * @param config The authentication configuration.
      */
+    fun initialize(config: KMAuthConfig) {
+        this.config = config
+        this.kmAuthPlatformContext = config.context as? KMAuthPlatformContext
+    }
+
+    /**
+     * Initializes the authentication system with a platform context.
+     * This is a convenience method for backward compatibility.
+     *
+     * @param context The platform-specific context.
+     */
+    fun initialize(context: KMAuthPlatformContext) {
+        this.kmAuthPlatformContext = context
+    }
+
+    /**
+     * Gets the current authentication configuration.
+     *
+     * @return The current [KMAuthConfig] or null if not initialized.
+     */
+    fun getConfig(): KMAuthConfig? = config
+
+    /**
+     * Gets the web client ID from the configuration.
+     *
+     * @return The web client ID or null if not configured.
+     */
+    fun getWebClientId(): String? = config?.webClientId
+
+    /**
+     * Gets the client secret from the configuration.
+     *
+     * @return The client secret or null if not configured.
+     */
+    fun getClientSecret(): String? = config?.clientSecret
+
+    /**
+     * Gets the Supabase URL from the configuration.
+     *
+     * @return The Supabase URL or null if not configured.
+     */
+    fun getSupabaseUrl(): String? = config?.supabaseUrl
+
+    /**
+     * Gets the Supabase key from the configuration.
+     *
+     * @return The Supabase key or null if not configured.
+     */
+    fun getSupabaseKey(): String? = config?.supabaseKey
+
+    /**
+     * Gets the platform context.
+     *
+     * @return The platform context or null if not initialized.
+     */
+    fun getKMAuthPlatformContext(): KMAuthPlatformContext? = kmAuthPlatformContext
+
+    // Deprecated methods for backward compatibility
+    @Deprecated("Use initialize(KMAuthConfig) instead", ReplaceWith("initialize(KMAuthConfig.forGoogle(context, webClientId, clientSecret))"))
     fun init(webClientId: String, clientSecret: String? = null) {
-        this.webClientId = webClientId
-        clientSecret?.let {
-            this.clientSecret = clientSecret
-        }
+        this.config = KMAuthConfig.forGoogle(
+            context = null,
+            webClientId = webClientId,
+            clientSecret = clientSecret
+        )
     }
 
-    /**
-     * This method will be used for jvm platform for initialization of clientSecret.
-     * If we don't want to call [KMAuthInitializer.init(webClientId: String, clientSecret: String?)] from each platform,
-     * we can call this method from jvm source set and KMAuthInitializer.init(webClientId: String) from composable for all platforms.
-     */
-    fun initClientSecret(clientSecret: String) {
-        this.clientSecret = clientSecret
-    }
-
-    /**
-     * This method can be used for webClientId and Android platform for initialization of KMAuthPlatformContext.
-     */
+    @Deprecated("Use initialize(KMAuthConfig) instead", ReplaceWith("initialize(KMAuthConfig.forGoogle(kmAuthPlatformContext, webClientId))"))
     fun initWithContext(webClientId: String, kmAuthPlatformContext: KMAuthPlatformContext) {
-        this.webClientId = webClientId
         this.kmAuthPlatformContext = kmAuthPlatformContext
+        this.config = KMAuthConfig.forGoogle(
+            context = kmAuthPlatformContext,
+            webClientId = webClientId
+        )
     }
 
-    /**
-     * This method can be used for Android platform for initialization of KMAuthPlatformContext.
-     */
+    @Deprecated("Use initialize(KMAuthPlatformContext) instead", ReplaceWith("initialize(kmAuthPlatformContext)"))
     fun initContext(kmAuthPlatformContext: KMAuthPlatformContext) {
         this.kmAuthPlatformContext = kmAuthPlatformContext
     }
 
-    fun getWebClientId(): String? {
-        return webClientId
+    @Deprecated("Use initialize(KMAuthConfig) with a config containing the client secret")
+    fun initClientSecret(clientSecret: String) {
+        this.config = this.config?.copy(clientSecret = clientSecret)
     }
-
-    fun getClientSecret(): String? {
-        return clientSecret
-    }
-
-    fun getKMAuthPlatformContext(): KMAuthPlatformContext? {
-        return kmAuthPlatformContext
-    }
-
 }

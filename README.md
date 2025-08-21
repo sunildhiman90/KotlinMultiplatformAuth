@@ -30,7 +30,7 @@ KMAuthInitializer.initWithContext(
 )
 
 //For other platforms except android we can use this without context
-KMAuthInitializer.init(webClientId = "YOUR_WEB_CLIENT_ID")
+KMAuthInitializer.initialize(KMAuthConfig.forGoogle(webClientId = "YOUR_WEB_CLIENT_ID"))
 
 ```
 
@@ -212,9 +212,7 @@ KMAuthInitializer.initContext(
 And then setup webClientId in common code for all platforms(App composable).
 
 ```kotlin   
-KMAuthInitializer.init(
-    webClientId = "YOUR_WEB_CLIENT_ID",
-)
+ KMAuthInitializer.initialize(KMAuthConfig.forGoogle(webClientId = "YOUR_WEB_CLIENT_ID"))
 ```
 
 If you use This Alternative Way, then you dont need to initialize the KMAuthInitializer in each

@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import com.sunildhiman90.kmauth.core.KMAuthConfig
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.google.KMAuthGoogle
+import com.sunildhiman90.kmauth.supabase.KMAuthSupabase
+import com.sunildhiman90.kmauth.supabase.model.SupabaseOAuthProvider
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -25,8 +27,17 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Preview
 fun App() {
 
+
     KMAuthInitializer.initialize(KMAuthConfig.forGoogle(webClientId = "YOUR_WEB_CLIENT_ID"))
 
+
+    //If you are using supabse auth from kmauth, then you need to initialize supabase auth
+    KMAuthSupabase.initialize(KMAuthConfig.forSupabase(
+        supabaseUrl = "YOUR_SUPABASE_URL",
+        supabaseKey = "YOUR_SUPABASE_KEY",
+        androidDeepLinkHost = "YOUR_ANDROID_DEEP_LINK_HOST",
+        androidDeepLinkScheme = "YOUR_ANDROID_DEEP_LINK_SCHEME"
+    ))
 
     MaterialTheme {
         Column(
@@ -56,14 +67,26 @@ fun App() {
                         scope.launch {
 
                             //Without callback, Recommended way
-                            val result = googleAuthManager.signIn()
+                            /*val result = googleAuthManager.signIn()
                             if (result.isSuccess) {
                                 println("Login Successful user: ${result.getOrNull()}")
                                 userName = result.getOrNull()?.name
                             } else {
                                 println("Error in google Sign In: ${result.exceptionOrNull()}")
-                            }
+                            }*/
 
+                            KMAuthSupabase.getAuthManager().signIn(
+                                provider = SupabaseOAuthProvider.GOOGLE,
+                            )
+
+                            KMAuthSupabase.supabaseUser.collect {
+                                if (it != null) {
+                                    println("Login Successful user: ${it}")
+                                    userName = it.name
+                                } else {
+                                    println("Error in google Sign In")
+                                }
+                            }
 
                             //Using callback
 //                            googleAuthManager.signIn { user, error ->

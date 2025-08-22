@@ -11,12 +11,16 @@ package com.sunildhiman90.kmauth.core
  */
 data class KMAuthConfig(
     val context: Any? = null,
-    val supabaseUrl: String? = null,
-    val supabaseKey: String? = null,
     val webClientId: String? = null,
     val clientSecret: String? = null,
+
+    //supabase
+    val supabaseUrl: String? = null,
+    val supabaseKey: String? = null,
     val autoLoadFromStorage: Boolean = true,
-    val autoRefreshToken: Boolean = true
+    val autoRefreshToken: Boolean = true,
+    val androidDeepLinkHost: String? = null,
+    val androidDeepLinkScheme: String? = null
 ) {
     init {
         // Validate Supabase configuration if URL or key is provided
@@ -33,13 +37,19 @@ data class KMAuthConfig(
          * @param context The platform-specific context (e.g., Android Context).
          * @param supabaseUrl The Supabase project URL.
          * @param supabaseKey The Supabase anon/public key.
+         * @param autoLoadFromStorage Whether to automatically load authentication data from storage.
+         * @param autoRefreshToken Whether to automatically refresh access tokens.
+         * @param androidDeepLinkHost The host for Android deep links for oauth.
+         * @param androidDeepLinkScheme The scheme for Android deep links for oauth.
          */
         fun forSupabase(
             context: Any? = null,
             supabaseUrl: String,
             supabaseKey: String,
             autoLoadFromStorage: Boolean = true,
-            autoRefreshToken: Boolean = true
+            autoRefreshToken: Boolean = true,
+            androidDeepLinkHost: String? = null,
+            androidDeepLinkScheme: String? = null
         ): KMAuthConfig {
             return KMAuthConfig(
                 context = context,
@@ -48,7 +58,9 @@ data class KMAuthConfig(
                 webClientId = null,
                 clientSecret = null,
                 autoLoadFromStorage = autoLoadFromStorage,
-                autoRefreshToken = autoRefreshToken
+                autoRefreshToken = autoRefreshToken,
+                androidDeepLinkHost = androidDeepLinkHost,
+                androidDeepLinkScheme = androidDeepLinkScheme
             )
         }
 
@@ -61,7 +73,7 @@ data class KMAuthConfig(
          */
         fun forGoogle(
             context: Any? = null,
-            webClientId: String,
+            webClientId: String? = null,
             clientSecret: String? = null,
         ): KMAuthConfig {
             return KMAuthConfig(

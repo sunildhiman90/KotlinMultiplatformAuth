@@ -89,7 +89,7 @@ object KMAuthInitializer {
         )
     }
 
-    @Deprecated("Use initialize(KMAuthPlatformContext) instead", ReplaceWith("initialize(kmAuthPlatformContext)"))
+    @Deprecated("Use initialize(KMAuthConfig) instead", ReplaceWith("initialize(KMAuthConfig.forGoogle(kmAuthPlatformContext, webClientId))"))
     fun initContext(kmAuthPlatformContext: KMAuthPlatformContext) {
         this.kmAuthPlatformContext = kmAuthPlatformContext
     }

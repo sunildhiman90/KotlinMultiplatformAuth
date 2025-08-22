@@ -57,7 +57,7 @@ kotlin {
                 
                 // Kotlinx Serialization
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.supabase.auth)
+                api(libs.supabase.auth)
                 
             }
         }
@@ -69,24 +69,13 @@ kotlin {
         jvmMain.dependencies {
             // Any JVM-specific dependencies if needed
         }
-
-        // Configure iOS targets
-        val iosMain by creating {
-            dependsOn(commonMain)
-        }
         
         // Configure iOS targets to use the common iOS source set
         listOf(
             iosX64(),
             iosArm64(),
             iosSimulatorArm64()
-        ).forEach { iosTarget ->
-            iosTarget.compilations.getByName("main") {
-                defaultSourceSet {
-                    dependsOn(iosMain)
-                }
-            }
-        }
+        )
 
         val commonTest by getting {
             dependencies {

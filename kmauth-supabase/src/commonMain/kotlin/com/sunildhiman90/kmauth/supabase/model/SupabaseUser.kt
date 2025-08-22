@@ -1,6 +1,8 @@
 package com.sunildhiman90.kmauth.supabase.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.time.ExperimentalTime
 
 /**
  * Data class representing a Supabase user
@@ -72,3 +74,26 @@ data class SupabaseUser(
      */
     val updatedAt: String? = null
 )
+
+
+/**
+ * Converts a Supabase UserInfo object to a SupabaseUser.
+ */
+@OptIn(ExperimentalTime::class)
+fun io.github.jan.supabase.auth.user.UserInfo.toSupabaseUser(): SupabaseUser {
+    return SupabaseUser(
+        id = this.id,
+        email = this.email,
+        phone = this.phone,
+        name = this.userMetadata?.get("full_name")?.jsonPrimitive?.content,
+        firstName = this.userMetadata?.get("first_name")?.jsonPrimitive?.content,
+        lastName = this.userMetadata?.get("last_name")?.jsonPrimitive?.content,
+        avatarUrl = this.userMetadata?.get("avatar_url")?.jsonPrimitive?.content,
+        provider = this.appMetadata?.get("provider")?.jsonPrimitive?.content,
+        emailConfirmedAt = this.emailConfirmedAt?.toString(),
+        phoneConfirmedAt = this.phoneConfirmedAt?.toString(),
+        lastSignInAt = this.lastSignInAt?.toString(),
+        createdAt = this.createdAt?.toString(),
+        updatedAt = this.updatedAt?.toString()
+    )
+}

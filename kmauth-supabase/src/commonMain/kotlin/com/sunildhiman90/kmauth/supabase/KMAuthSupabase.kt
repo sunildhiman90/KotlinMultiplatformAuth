@@ -38,8 +38,8 @@ object KMAuthSupabase : CoroutineScope {
 
     private var sessionJob: Job? = null
 
-    private val _supabaseUser: MutableStateFlow<SupabaseUser?> = MutableStateFlow(null)
-    val supabaseUser: StateFlow<SupabaseUser?> = _supabaseUser.asStateFlow()
+    private val _supabaseUserResult: MutableStateFlow<Result<SupabaseUser?>> = MutableStateFlow(Result.success(null))
+    val supabaseUserResult: StateFlow<Result<SupabaseUser?>> = _supabaseUserResult.asStateFlow()
 
     /**
      * Initialize the Supabase client with the given configuration only once.
@@ -68,11 +68,9 @@ object KMAuthSupabase : CoroutineScope {
                     this.alwaysAutoRefresh = config.autoRefreshToken
                     redirectUrl?.let { this.defaultRedirectUrl = it }
 
-                    //Android deep links
+                    //Android and ios deep links
                     config.androidDeepLinkHost?.let { this.host = it }
                     config.androidDeepLinkScheme?.let { this.scheme = it }
-
-                    //TODO, add iOS deep links url scheme
                 }
             }
         }
@@ -89,25 +87,28 @@ object KMAuthSupabase : CoroutineScope {
         sessionJob = launch {
             getSupabaseClient().auth.sessionStatus.collect { sessionStatus ->
                 Logger.withTag("KMAuthSupabase").i("sessionStatus: $sessionStatus")
-                val user: SupabaseUser? = when (sessionStatus) {
+                when (sessionStatus) {
                     is SessionStatus.Initializing -> {
                         Logger.i("Initializing")
-                        null
                     }
 
                     is SessionStatus.Authenticated -> {
                         Logger.i("Authenticated")
                         val supabaseUser = sessionStatus.session.user
-                        supabaseUser?.toSupabaseUser()
+                        val user = supabaseUser?.toSupabaseUser()
+                        _supabaseUserResult.value = Result.success(user)
                     }
 
                     else -> {
-                        null
+                        Logger.i("supabase sessionStatus: $sessionStatus")
                     }
                 }
-                _supabaseUser.value = user
             }
         }
+    }
+
+    fun updateSupabaseUserResult(result: Result<SupabaseUser?>) {
+        _supabaseUserResult.value = result
     }
 
     /**

@@ -79,12 +79,13 @@ fun App() {
                                 provider = SupabaseOAuthProvider.GOOGLE,
                             )
 
-                            KMAuthSupabase.supabaseUser.collect {
-                                if (it != null) {
-                                    println("Login Successful user: ${it}")
-                                    userName = it.name
+                            KMAuthSupabase.supabaseUserResult.collect {
+                                if (it.isSuccess && it.getOrNull() != null) {
+                                    val user = it.getOrNull()
+                                    println("Login Successful user: ${it.getOrNull()}")
+                                    userName = user?.name
                                 } else {
-                                    println("Error in google Sign In")
+                                    println("Error in google Sign In: ${it.exceptionOrNull()}")
                                 }
                             }
 

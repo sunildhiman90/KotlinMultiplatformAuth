@@ -78,8 +78,6 @@ data class KMAuthConfig(
         ): KMAuthConfig {
             return KMAuthConfig(
                 context = context,
-                supabaseUrl = null,
-                supabaseKey = null,
                 webClientId = webClientId,
                 clientSecret = clientSecret
             )

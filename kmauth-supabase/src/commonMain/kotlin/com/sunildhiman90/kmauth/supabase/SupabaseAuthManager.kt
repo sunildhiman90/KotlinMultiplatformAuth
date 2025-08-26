@@ -47,8 +47,8 @@ class SupabaseAuthManager(
     ) {
 
         val exceptionHandler = CoroutineExceptionHandler { _, exception ->
-            Logger.withTag("SupabaseAuthManager")
-                .e("CoroutineExceptionHandler:google signIn failed: $exception")
+            Logger.withTag("SupabaseAuthManager").e("Supabase signIn with $provider failed: $exception")
+            KMAuthSupabase.updateSupabaseUserResult(Result.failure(Exception("Supabase signIn with $provider failed: $exception")))
         }
 
         launch(exceptionHandler) {
@@ -67,9 +67,9 @@ class SupabaseAuthManager(
                     }
                 }
 
-//            //TODO, need to listen for error, for example , provider not supported, client id not set, etc..
             } catch (e: Exception) {
-                Logger.withTag("SupabaseAuthManager").e("google signIn failed exception: $e")
+                Logger.withTag("SupabaseAuthManager").e("Supabase signIn with $provider failed: $e")
+                KMAuthSupabase.updateSupabaseUserResult(Result.failure(Exception("Supabase signIn with $provider failed: $e")))
             }
         }
     }

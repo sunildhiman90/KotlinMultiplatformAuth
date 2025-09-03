@@ -52,7 +52,6 @@ object KMAuthSupabase : CoroutineScope {
         config: KMAuthConfig,
         redirectUrl: String? = null
     ): SupabaseAuthManager {
-        //TODO, apply mutex
         if (authManager != null) {
             return authManager!!
         }

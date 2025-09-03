@@ -28,10 +28,11 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun App() {
 
 
+    //For Google
     KMAuthInitializer.initialize(KMAuthConfig.forGoogle(webClientId = "YOUR_WEB_CLIENT_ID"))
 
 
-    //If you are using supabse auth from kmauth, then you need to initialize supabase auth
+    //If you are using only supabase auth from kmauth, then you need to initialize KMAuthSupabase with KMAuthConfig.forSupabase
     KMAuthSupabase.initialize(KMAuthConfig.forSupabase(
         supabaseUrl = "YOUR_SUPABASE_URL",
         supabaseKey = "YOUR_SUPABASE_KEY",

@@ -19,8 +19,8 @@ data class KMAuthConfig(
     val supabaseKey: String? = null,
     val autoLoadFromStorage: Boolean = true,
     val autoRefreshToken: Boolean = true,
-    val androidDeepLinkHost: String? = null,
-    val androidDeepLinkScheme: String? = null
+    val deepLinkHost: String? = null,
+    val deepLinkScheme: String? = null
 ) {
     init {
         // Validate Supabase configuration if URL or key is provided
@@ -39,8 +39,8 @@ data class KMAuthConfig(
          * @param supabaseKey The Supabase anon/public key.
          * @param autoLoadFromStorage Whether to automatically load authentication data from storage.
          * @param autoRefreshToken Whether to automatically refresh access tokens.
-         * @param androidDeepLinkHost The host for Android deep links for oauth.
-         * @param androidDeepLinkScheme The scheme for Android deep links for oauth.
+         * @param deepLinkHost The host for Android/ios deep links for oauth.
+         * @param deepLinkScheme The scheme for Android/ios deep links for oauth.
          */
         fun forSupabase(
             context: Any? = null,
@@ -48,8 +48,8 @@ data class KMAuthConfig(
             supabaseKey: String,
             autoLoadFromStorage: Boolean = true,
             autoRefreshToken: Boolean = true,
-            androidDeepLinkHost: String? = null,
-            androidDeepLinkScheme: String? = null
+            deepLinkHost: String? = null,
+            deepLinkScheme: String? = null
         ): KMAuthConfig {
             return KMAuthConfig(
                 context = context,
@@ -59,8 +59,8 @@ data class KMAuthConfig(
                 clientSecret = null,
                 autoLoadFromStorage = autoLoadFromStorage,
                 autoRefreshToken = autoRefreshToken,
-                androidDeepLinkHost = androidDeepLinkHost,
-                androidDeepLinkScheme = androidDeepLinkScheme
+                deepLinkHost = deepLinkHost,
+                deepLinkScheme = deepLinkScheme
             )
         }
 

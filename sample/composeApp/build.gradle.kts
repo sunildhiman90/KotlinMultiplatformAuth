@@ -64,6 +64,9 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+
+            // Export it to iosApp xcode project for calling handleDeepLink
+            export(projects.kmauthSupabase)
         }
     }
     
@@ -83,7 +86,9 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(projects.kmauthGoogle) //using TYPESAFE_PROJECT_ACCESSORS
-            implementation(projects.kmauthSupabase) //using TYPESAFE_PROJECT_ACCESSORS
+
+            //To make it exportable to iosApp xcode project, we need to add it as api
+            api(projects.kmauthSupabase) //using TYPESAFE_PROJECT_ACCESSORS
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

@@ -35,8 +35,8 @@ fun App() {
     KMAuthSupabase.initialize(KMAuthConfig.forSupabase(
         supabaseUrl = "YOUR_SUPABASE_URL",
         supabaseKey = "YOUR_SUPABASE_KEY",
-        androidDeepLinkHost = "YOUR_ANDROID_DEEP_LINK_HOST",
-        androidDeepLinkScheme = "YOUR_ANDROID_DEEP_LINK_SCHEME"
+        deepLinkHost = "YOUR_ANDROID_DEEP_LINK_HOST",
+        deepLinkScheme = "YOUR_ANDROID_DEEP_LINK_SCHEME"
     ))
 
     MaterialTheme {

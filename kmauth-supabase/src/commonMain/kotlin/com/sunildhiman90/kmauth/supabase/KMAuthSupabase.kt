@@ -69,8 +69,8 @@ object KMAuthSupabase : CoroutineScope {
                     redirectUrl?.let { this.defaultRedirectUrl = it }
 
                     //Android and ios deep links
-                    config.androidDeepLinkHost?.let { this.host = it }
-                    config.androidDeepLinkScheme?.let { this.scheme = it }
+                    config.deepLinkHost?.let { this.host = it }
+                    config.deepLinkScheme?.let { this.scheme = it }
                 }
             }
         }

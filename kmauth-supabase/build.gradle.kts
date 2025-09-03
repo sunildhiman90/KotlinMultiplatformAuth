@@ -69,13 +69,6 @@ kotlin {
         jvmMain.dependencies {
             // Any JVM-specific dependencies if needed
         }
-        
-        // Configure iOS targets to use the common iOS source set
-        listOf(
-            iosX64(),
-            iosArm64(),
-            iosSimulatorArm64()
-        )
 
         val commonTest by getting {
             dependencies {

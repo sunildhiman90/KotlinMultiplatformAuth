@@ -1,5 +1,6 @@
 package com.sunildhiman90.kmauth.supabase.model
 
+import com.sunildhiman90.kmauth.core.KMAuthUser
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.ExperimentalTime
@@ -65,6 +66,11 @@ data class SupabaseUser(
     val lastSignInAt: String? = null,
 
     /**
+     * The user's access token
+     */
+    val accessToken: String? = null,
+
+    /**
      * The user's creation timestamp
      */
     val createdAt: String? = null,
@@ -97,3 +103,13 @@ fun io.github.jan.supabase.auth.user.UserInfo.toSupabaseUser(): SupabaseUser {
         updatedAt = this.updatedAt?.toString()
     )
 }
+
+fun SupabaseUser.toKMAuthUser(): KMAuthUser =
+    KMAuthUser(
+        id = id,
+        email = email ?: "",
+        accessToken = accessToken,
+        name = name,
+        phoneNumber = phone,
+        profilePicUrl = avatarUrl
+    )

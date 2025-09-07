@@ -5,7 +5,8 @@ import com.sunildhiman90.kmauth.core.KMAuthConfig
 import com.sunildhiman90.kmauth.supabase.KMAuthSupabase.initialize
 import com.sunildhiman90.kmauth.supabase.deeplink.DeepLinkHandler
 import com.sunildhiman90.kmauth.supabase.deeplink.getDeepLinkHandler
-import com.sunildhiman90.kmauth.supabase.model.SupabaseExternalAuthConfig
+import com.sunildhiman90.kmauth.supabase.model.SupabaseAuthConfig
+import com.sunildhiman90.kmauth.supabase.model.SupabaseDefaultAuthProvider
 import com.sunildhiman90.kmauth.supabase.model.SupabaseOAuthProvider
 import com.sunildhiman90.kmauth.supabase.model.SupabaseUser
 import com.sunildhiman90.kmauth.supabase.model.toSupabaseUser
@@ -94,7 +95,8 @@ object KMAuthSupabase : CoroutineScope {
                     is SessionStatus.Authenticated -> {
                         Logger.i("Authenticated")
                         val supabaseUser = sessionStatus.session.user
-                        val user = supabaseUser?.toSupabaseUser()
+                        val accessToken = sessionStatus.session.accessToken
+                        val user = supabaseUser?.toSupabaseUser()?.copy(accessToken = accessToken)
                         _supabaseUserResult.value = Result.success(user)
                     }
 
@@ -146,10 +148,20 @@ object KMAuthSupabase : CoroutineScope {
      * Sign in with a provider using the default auth manager.
      */
     suspend fun signInWith(
-        provider: SupabaseOAuthProvider,
-        config: () -> SupabaseExternalAuthConfig = { SupabaseExternalAuthConfig() },
+        supabaseOAuthProvider: SupabaseOAuthProvider,
+        config: SupabaseAuthConfig = SupabaseAuthConfig(),
     ) {
-        getAuthManager().signIn(provider, config)
+        getAuthManager().signInWith(supabaseOAuthProvider, config)
+    }
+
+    /**
+     * Sign in with a default auth provider using the default auth manager.
+     */
+    suspend fun signInWithDefaultAuthProvider(
+        supabaseDefaultAuthProvider: SupabaseDefaultAuthProvider,
+        config: SupabaseAuthConfig = SupabaseAuthConfig(),
+    ) {
+        getAuthManager().signInWith(supabaseDefaultAuthProvider, config)
     }
 
     /**

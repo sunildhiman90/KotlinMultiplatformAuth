@@ -86,6 +86,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(projects.kmauthGoogle) //using TYPESAFE_PROJECT_ACCESSORS
+            implementation(projects.kmauthApple) //using TYPESAFE_PROJECT_ACCESSORS
 
             //To make it exportable to iosApp xcode project, we need to add it as api
             api(projects.kmauthSupabase) //using TYPESAFE_PROJECT_ACCESSORS

@@ -52,14 +52,14 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
     init {
 
-        require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
+        require(!KMAuthInitializer.getWebClientId(providerId).isNullOrEmpty()) {
             val message =
-                "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
             Logger.withTag(TAG).e(message)
             message
         }
 
-        webClientId = KMAuthInitializer.getWebClientId()!!
+        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
 
         loadGoogleSignInLibrary {
             Logger.d("Google sign in library loaded")

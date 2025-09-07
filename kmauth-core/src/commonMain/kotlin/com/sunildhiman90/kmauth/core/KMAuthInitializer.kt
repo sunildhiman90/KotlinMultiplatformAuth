@@ -5,63 +5,68 @@ package com.sunildhiman90.kmauth.core
  */
 object KMAuthInitializer {
 
-    private var config: KMAuthConfig? = null
+    private var configs: MutableMap<String, KMAuthConfig> = mutableMapOf()
     private var kmAuthPlatformContext: KMAuthPlatformContext? = null
 
     /**
-     * Initializes the authentication system with the provided configuration.
+     * Initializes the authentication system with the provided configuration for a specific provider.
      *
-     * @param config The authentication configuration.
+     * @param providerId A unique identifier for the provider (e.g., "google", "apple", "supabase").
+     * @param config The authentication configuration for the provider.
      */
-    fun initialize(config: KMAuthConfig) {
-        this.config = config
-        this.kmAuthPlatformContext = config.context as? KMAuthPlatformContext
+    fun initialize(providerId: String = "default", config: KMAuthConfig) {
+        configs[providerId] = config
+        if (config.kmAuthPlatformContext != null) {
+            this.kmAuthPlatformContext = config.kmAuthPlatformContext
+        }
     }
-
+    
     /**
-     * Initializes the authentication system with a platform context.
-     * This is a convenience method for backward compatibility.
+     * Gets the configuration for a specific provider.
      *
-     * @param context The platform-specific context.
+     * @param providerId The unique identifier for the provider.
+     * @return The [KMAuthConfig] for the specified provider, or null if not found.
      */
-    fun initialize(context: KMAuthPlatformContext) {
-        this.kmAuthPlatformContext = context
-    }
-
+    fun getConfig(providerId: String): KMAuthConfig? = configs[providerId]
+    
     /**
-     * Gets the current authentication configuration.
+     * Gets all configurations.
      *
-     * @return The current [KMAuthConfig] or null if not initialized.
+     * @return Map of all provider configurations.
      */
-    fun getConfig(): KMAuthConfig? = config
+    fun getAllConfigs(): Map<String, KMAuthConfig> = configs.toMap()
 
     /**
-     * Gets the web client ID from the configuration.
+     * Gets the web client ID from the configuration of the specified provider.
      *
+     * @param providerId The unique identifier for the provider.
      * @return The web client ID or null if not configured.
      */
-    fun getWebClientId(): String? = config?.webClientId
+    fun getWebClientId(providerId: String): String? = configs[providerId]?.webClientId
 
     /**
-     * Gets the client secret from the configuration.
+     * Gets the client secret from the configuration of the specified provider.
      *
+     * @param providerId The unique identifier for the provider.
      * @return The client secret or null if not configured.
      */
-    fun getClientSecret(): String? = config?.clientSecret
+    fun getClientSecret(providerId: String): String? = configs[providerId]?.clientSecret
 
     /**
-     * Gets the Supabase URL from the configuration.
+     * Gets the Supabase URL from the configuration of the specified provider.
      *
+     * @param providerId The unique identifier for the provider.
      * @return The Supabase URL or null if not configured.
      */
-    fun getSupabaseUrl(): String? = config?.supabaseUrl
+    fun getSupabaseUrl(providerId: String): String? = configs[providerId]?.supabaseUrl
 
     /**
-     * Gets the Supabase key from the configuration.
+     * Gets the Supabase key from the configuration of the specified provider.
      *
+     * @param providerId The unique identifier for the provider.
      * @return The Supabase key or null if not configured.
      */
-    fun getSupabaseKey(): String? = config?.supabaseKey
+    fun getSupabaseKey(providerId: String): String? = configs[providerId]?.supabaseKey
 
     /**
      * Gets the platform context.
@@ -71,31 +76,55 @@ object KMAuthInitializer {
     fun getKMAuthPlatformContext(): KMAuthPlatformContext? = kmAuthPlatformContext
 
     // Deprecated methods for backward compatibility
-    @Deprecated("Use initialize(KMAuthConfig) instead", ReplaceWith("initialize(KMAuthConfig.forGoogle(context, webClientId, clientSecret))"))
+    @Deprecated(
+        "Use initialize(providerId, config) with a proper KMAuthConfig instance instead",
+        ReplaceWith("initialize(providerId, config)")
+    )
     fun init(webClientId: String, clientSecret: String? = null) {
-        this.config = KMAuthConfig.forGoogle(
-            context = null,
+        initialize("default", KMAuthConfig(
+            providerId = "default",
             webClientId = webClientId,
             clientSecret = clientSecret
-        )
+        ))
     }
 
-    @Deprecated("Use initialize(KMAuthConfig) instead", ReplaceWith("initialize(KMAuthConfig.forGoogle(kmAuthPlatformContext, webClientId))"))
+    @Deprecated(
+        "Use initialize(providerId, config) with a proper KMAuthConfig instance instead",
+        ReplaceWith("initialize(providerId, config)")
+    )
     fun initWithContext(webClientId: String, kmAuthPlatformContext: KMAuthPlatformContext) {
         this.kmAuthPlatformContext = kmAuthPlatformContext
-        this.config = KMAuthConfig.forGoogle(
-            context = kmAuthPlatformContext,
+        initialize("default", KMAuthConfig(
+            providerId = "default",
+            kmAuthPlatformContext = kmAuthPlatformContext,
             webClientId = webClientId
-        )
+        ))
     }
 
-    @Deprecated("Use initialize(KMAuthConfig) instead", ReplaceWith("initialize(KMAuthConfig.forGoogle(kmAuthPlatformContext, webClientId))"))
+    @Deprecated(
+        "Use initialize(providerId, config) with a proper KMAuthConfig instance instead",
+        ReplaceWith("initialize(providerId, config)")
+    )
     fun initContext(kmAuthPlatformContext: KMAuthPlatformContext) {
         this.kmAuthPlatformContext = kmAuthPlatformContext
     }
 
-    @Deprecated("Use initialize(KMAuthConfig) with a config containing the client secret")
+    @Deprecated(
+        "Use initialize(providerId, config) with a proper KMAuthConfig instance instead",
+        ReplaceWith("initialize(providerId, config)")
+    )
+    /**
+     * This method will be used for jvm platform for initialization of clientSecret.
+     * Make sure you have initialized the webClientId using KMAuthInitializer.init() or KMAuthInitializer.initialize(providerId, config)  with a proper KMAuthConfig instance.
+     */
     fun initClientSecret(clientSecret: String) {
-        this.config = this.config?.copy(clientSecret = clientSecret)
+        val current = configs["default"] ?: 
+            throw IllegalStateException("No default configuration found. Initialize with a provider first using [KMAuthInitializer.initialize(providerId, config)] with a proper KMAuthConfig instance instead.")
+        
+        // Create a new config with the updated client secret
+        val newConfig = current.copy(
+            clientSecret = clientSecret,
+        )
+        configs["default"] = newConfig
     }
 }

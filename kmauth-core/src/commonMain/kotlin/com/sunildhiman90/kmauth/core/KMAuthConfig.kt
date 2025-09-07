@@ -3,18 +3,24 @@ package com.sunildhiman90.kmauth.core
 /**
  * Configuration class for KMAuth that supports multiple authentication providers.
  *
- * @property context The platform-specific context (e.g., Android Context).
+ * @property kmAuthPlatformContext The platform-specific context (e.g., Android Context).
  * @property supabaseUrl The Supabase project URL (required for Supabase auth).
  * @property supabaseKey The Supabase anon/public key (required for Supabase auth).
  * @property webClientId The OAuth web client ID (required for Google auth).
  * @property clientSecret The OAuth client secret (required for some OAuth flows).
  */
 data class KMAuthConfig(
-    val context: Any? = null,
+    /**
+     * A unique identifier for the provider (e.g., "google", "supabase").
+     * This is used to store and retrieve the configuration for different providers.
+     */
+    val providerId: String,
+
+    val kmAuthPlatformContext: KMAuthPlatformContext? = null,
     val webClientId: String? = null,
     val clientSecret: String? = null,
 
-    //supabase
+    // Supabase
     val supabaseUrl: String? = null,
     val supabaseKey: String? = null,
     val autoLoadFromStorage: Boolean = true,
@@ -34,7 +40,8 @@ data class KMAuthConfig(
         /**
          * Creates a [KMAuthConfig] for Supabase authentication.
          *
-         * @param context The platform-specific context (e.g., Android Context).
+         * @param providerId A unique identifier for this provider
+         * @param kmAuthPlatformContext The platform-specific context (e.g., Android Context).
          * @param supabaseUrl The Supabase project URL.
          * @param supabaseKey The Supabase anon/public key.
          * @param autoLoadFromStorage Whether to automatically load authentication data from storage.
@@ -43,44 +50,51 @@ data class KMAuthConfig(
          * @param deepLinkScheme The scheme for Android/ios deep links for oauth.
          */
         fun forSupabase(
-            context: Any? = null,
+            providerId: String = "supabase",
             supabaseUrl: String,
             supabaseKey: String,
+            kmAuthPlatformContext: KMAuthPlatformContext? = null,
             autoLoadFromStorage: Boolean = true,
             autoRefreshToken: Boolean = true,
             deepLinkHost: String? = null,
             deepLinkScheme: String? = null
-        ): KMAuthConfig {
-            return KMAuthConfig(
-                context = context,
-                supabaseUrl = supabaseUrl,
-                supabaseKey = supabaseKey,
-                webClientId = null,
-                clientSecret = null,
-                autoLoadFromStorage = autoLoadFromStorage,
-                autoRefreshToken = autoRefreshToken,
-                deepLinkHost = deepLinkHost,
-                deepLinkScheme = deepLinkScheme
-            )
-        }
+        ): KMAuthConfig = KMAuthConfig(
+            providerId = providerId,
+            kmAuthPlatformContext = kmAuthPlatformContext,
+            supabaseUrl = supabaseUrl,
+            supabaseKey = supabaseKey,
+            autoLoadFromStorage = autoLoadFromStorage,
+            autoRefreshToken = autoRefreshToken,
+            deepLinkHost = deepLinkHost,
+            deepLinkScheme = deepLinkScheme
+        )
 
         /**
-         * Creates a [KMAuthConfig] for Google OAuth authentication.
+         * Creates a [KMAuthConfig] for Google authentication.
          *
-         * @param context The platform-specific context (e.g., Android Context).
+         * @param providerId A unique identifier for this provider (e.g., "google-main", "google-backup").
+         * @param kmAuthPlatformContext The platform-specific context (e.g., Android Context).
          * @param webClientId The OAuth web client ID.
-         * @param clientSecret The OAuth client secret (required for server-side flows).
+         * @param clientSecret The OAuth client secret.
          */
         fun forGoogle(
-            context: Any? = null,
-            webClientId: String? = null,
-            clientSecret: String? = null,
+            webClientId: String,
+            providerId: String = "google",
+            kmAuthPlatformContext: KMAuthPlatformContext? = null,
+            clientSecret: String? = null
         ): KMAuthConfig {
-            return KMAuthConfig(
-                context = context,
+            val kmAuthConfig = KMAuthConfig(
+                providerId = providerId,
                 webClientId = webClientId,
                 clientSecret = clientSecret
             )
+            return if (kmAuthPlatformContext != null) {
+                kmAuthConfig.copy(
+                    kmAuthPlatformContext = kmAuthPlatformContext
+                )
+            } else {
+                kmAuthConfig
+            }
         }
     }
 }

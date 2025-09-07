@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.sunildhiman90.kmauth.core.KMAuthConfig
+import com.sunildhiman90.kmauth.apple.KMAuthApple
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.google.KMAuthGoogle
 import com.sunildhiman90.kmauth.supabase.KMAuthSupabase
@@ -29,16 +30,22 @@ fun App() {
 
 
     //For Google
-    KMAuthInitializer.initialize(KMAuthConfig.forGoogle(webClientId = "YOUR_WEB_CLIENT_ID"))
+    KMAuthInitializer.initialize(
+        config = KMAuthConfig.forGoogle(
+            "YOUR_WEB_CLIENT_ID"
+        )
+    )
 
 
     //If you are using only supabase auth from kmauth, then you need to initialize KMAuthSupabase with KMAuthConfig.forSupabase
-    KMAuthSupabase.initialize(KMAuthConfig.forSupabase(
-        supabaseUrl = "YOUR_SUPABASE_URL",
-        supabaseKey = "YOUR_SUPABASE_KEY",
-        deepLinkHost = "YOUR_ANDROID_DEEP_LINK_HOST",
-        deepLinkScheme = "YOUR_ANDROID_DEEP_LINK_SCHEME"
-    ))
+    KMAuthSupabase.initialize(
+        KMAuthConfig.forSupabase(
+            supabaseUrl = "YOUR_SUPABASE_URL",
+            supabaseKey = "YOUR_SUPABASE_KEY",
+            deepLinkHost = "YOUR_DEEP_LINK_HOST",
+            deepLinkScheme = "YOUR_DEEP_LINK_SCHEME"
+        )
+    )
 
     MaterialTheme {
         Column(
@@ -49,6 +56,7 @@ fun App() {
 
             //Ideally you will be using it from ViewModel or Repo
             val googleAuthManager = KMAuthGoogle.googleAuthManager
+            val appleAuthManager = KMAuthApple.appleAuthManager
 
             var userName: String? by remember {
                 mutableStateOf(
@@ -76,15 +84,22 @@ fun App() {
                                 println("Error in google Sign In: ${result.exceptionOrNull()}")
                             }*/
 
-                            KMAuthSupabase.getAuthManager().signIn(
-                                provider = SupabaseOAuthProvider.GOOGLE,
+                            val result = KMAuthSupabase.getAuthManager().signInWith(
+                                supabaseOAuthProvider = SupabaseOAuthProvider.GOOGLE,
                             )
 
+                            if (result.isSuccess && result.getOrNull() != null) {
+                                val user = result.getOrNull()
+                                println("Login Successful user: ${result.getOrNull()}")
+                                userName = user?.name
+                            } else {
+                                println("Error in google Sign In: ${result.exceptionOrNull()}")
+                            }
+
+                            //Optionally we can use this to get the result for supabase auth
                             KMAuthSupabase.supabaseUserResult.collect {
                                 if (it.isSuccess && it.getOrNull() != null) {
-                                    val user = it.getOrNull()
                                     println("Login Successful user: ${it.getOrNull()}")
-                                    userName = user?.name
                                 } else {
                                     println("Error in google Sign In: ${it.exceptionOrNull()}")
                                 }
@@ -103,6 +118,33 @@ fun App() {
                         }
                     }) {
                         Text("Google Sign In")
+                    }
+
+                    Button(onClick = {
+                        scope.launch {
+
+                            //Without callback, Recommended way
+                            val result = appleAuthManager.signIn()
+                            if (result.isSuccess) {
+                                println("Login Successful user: ${result.getOrNull()}")
+                                userName = result.getOrNull()?.name
+                            } else {
+                                println("Error in apple Sign In: ${result.exceptionOrNull()}")
+                            }
+
+                            //Using callback
+//                            appleAuthManager.signIn { user, error ->
+//                                if (error != null) {
+//                                    println("Error in google Sign In: $error")
+//                                }
+//                                if (user != null) {
+//                                    println("Login Successful user: $user")
+//                                    userName = user.name
+//                                }
+//                            }
+                        }
+                    }) {
+                        Text("Apple Sign In")
                     }
                 }
             }

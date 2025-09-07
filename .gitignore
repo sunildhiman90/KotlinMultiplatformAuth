@@ -11,3 +11,6 @@ xcuserdata
 .kotlin
 #So we don't accidentally commit our private keys
 *.gpg
+/sample/iosApp/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+/sample/iosApp/iosApp/iosApp.entitlements
+/sample/iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

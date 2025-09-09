@@ -22,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.json.JsonObject
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
@@ -193,7 +194,11 @@ class SupabaseAuthManager(
                 when (supabaseDefaultAuthProvider) {
                     SupabaseDefaultAuthProvider.EMAIL -> {
                         if (redirectUrl != null) {
-                            supabaseClient.auth.signInWith(Email, redirectUrl = redirectUrl, config = emailConfig)
+                            supabaseClient.auth.signInWith(
+                                Email,
+                                redirectUrl = redirectUrl,
+                                config = emailConfig
+                            )
                         } else {
                             supabaseClient.auth.signInWith(Email, config = emailConfig)
                         }
@@ -201,7 +206,11 @@ class SupabaseAuthManager(
 
                     SupabaseDefaultAuthProvider.ID_TOKEN -> {
                         if (redirectUrl != null) {
-                            supabaseClient.auth.signInWith(IDToken, redirectUrl = redirectUrl, config = idTokenConfig)
+                            supabaseClient.auth.signInWith(
+                                IDToken,
+                                redirectUrl = redirectUrl,
+                                config = idTokenConfig
+                            )
                         } else {
                             supabaseClient.auth.signInWith(IDToken, config = idTokenConfig)
                         }
@@ -209,7 +218,11 @@ class SupabaseAuthManager(
 
                     SupabaseDefaultAuthProvider.PHONE -> {
                         if (redirectUrl != null) {
-                            supabaseClient.auth.signInWith(Phone, redirectUrl = redirectUrl, config = phoneConfig)
+                            supabaseClient.auth.signInWith(
+                                Phone,
+                                redirectUrl = redirectUrl,
+                                config = phoneConfig
+                            )
                         } else {
                             supabaseClient.auth.signInWith(Phone, config = phoneConfig)
                         }
@@ -263,6 +276,27 @@ class SupabaseAuthManager(
         }
     }
 
+    /**
+     * Reset password for a user using their email.
+     */
+    suspend fun resetPasswordForEmail(
+        email: String,
+    ) {
+        supabaseClient.auth.resetPasswordForEmail(email)
+    }
+
+    /**
+     * Links an OAuth Identity to an existing user.
+     * The user needs to be signed in to call this method.
+     * If the candidate identity is already linked to the existing user or another user, this will fail.
+     *
+     * @param supabaseOAuthProvider The OAuth provider to link.
+     */
+    suspend fun linkIdentity(
+        supabaseOAuthProvider: SupabaseOAuthProvider
+    ) {
+        supabaseClient.auth.linkIdentity(supabaseOAuthProvider.toOAuthProvider())
+    }
 
     /**
      * Sign out the current user.

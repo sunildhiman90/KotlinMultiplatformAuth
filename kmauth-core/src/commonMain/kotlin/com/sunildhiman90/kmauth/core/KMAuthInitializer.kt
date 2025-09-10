@@ -101,10 +101,6 @@ object KMAuthInitializer {
         ))
     }
 
-    @Deprecated(
-        "Use initialize(providerId, config) with a proper KMAuthConfig instance instead",
-        ReplaceWith("initialize(providerId, config)")
-    )
     fun initContext(kmAuthPlatformContext: KMAuthPlatformContext) {
         this.kmAuthPlatformContext = kmAuthPlatformContext
     }

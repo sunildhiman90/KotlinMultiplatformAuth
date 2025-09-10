@@ -34,7 +34,7 @@ internal class AppleSupabaseAuthManager : AppleAuthManager {
         }
     }
 
-    override suspend fun signOut(userId: String?) {
+    override suspend fun signOut() {
         KMAuthSupabase.signOut()
     }
 

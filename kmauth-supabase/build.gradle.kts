@@ -62,12 +62,25 @@ kotlin {
             }
         }
 
-        androidMain.dependencies {
-            // Android-specific dependencies can be added here if needed
+        jvmMain {
+            dependencies {
+                implementation(libs.ktor.client.cio)
+            }
         }
-
-        jvmMain.dependencies {
-            // Any JVM-specific dependencies if needed
+        androidMain {
+            dependencies {
+                implementation(libs.ktor.client.cio)
+            }
+        }
+        jsMain {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
+        }
+        iosMain {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
         }
 
         val commonTest by getting {

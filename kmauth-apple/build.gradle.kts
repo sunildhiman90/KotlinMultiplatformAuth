@@ -56,7 +56,6 @@ kotlin {
                 api(projects.kmauthCore)
                 api(projects.kmauthSupabase)
                 // Kotlinx Serialization
-                implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.kotlinx.serialization.json)
             }
         }

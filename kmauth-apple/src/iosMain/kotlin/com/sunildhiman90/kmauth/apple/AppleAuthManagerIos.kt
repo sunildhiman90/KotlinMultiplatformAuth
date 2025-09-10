@@ -2,6 +2,7 @@ package com.sunildhiman90.kmauth.apple
 
 import co.touchlab.kermit.Logger
 import com.sunildhiman90.kmauth.core.KMAuthUser
+import com.sunildhiman90.kmauth.supabase.KMAuthSupabase
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.AuthenticationServices.ASAuthorizationAppleIDProvider
@@ -70,9 +71,10 @@ class AppleAuthManagerIOS : AppleAuthManager {
         }
     }
 
-    override suspend fun signOut(userId: String?) {
-        Logger.withTag(TAG).i("signOut called for user: $userId")
+    override suspend fun signOut() {
+        Logger.withTag(TAG).i("signOut called")
         // Apple Sign In doesn't have a traditional sign out flow
         // Clear any local user data here if needed
+        KMAuthSupabase.signOut()
     }
 }

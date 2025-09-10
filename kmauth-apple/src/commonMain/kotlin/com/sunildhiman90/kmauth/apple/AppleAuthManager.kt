@@ -15,5 +15,5 @@ interface AppleAuthManager {
 
     suspend fun signIn(): Result<KMAuthUser?>
 
-    suspend fun signOut(userId: String?)
+    suspend fun signOut()
 }

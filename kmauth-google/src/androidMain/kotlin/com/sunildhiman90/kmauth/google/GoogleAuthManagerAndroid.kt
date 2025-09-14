@@ -13,6 +13,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.sunildhiman90.kmauth.core.KMAuthConfig
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthPlatformContext
 import com.sunildhiman90.kmauth.core.KMAuthUser
@@ -24,7 +25,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 
-internal class GoogleAuthManagerAndroid : GoogleAuthManager {
+// Note: As of now using default providerId "default" for google auth for backward compatibility with deprecated methods,
+// Later on we will remove this and use providerId "google" by overriding the providerId form GoogleAuthManager
+internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
 
     private var credentialManager: CredentialManager
     private var kmAuthPlatformContext: KMAuthPlatformContext? = null
@@ -32,22 +35,21 @@ internal class GoogleAuthManagerAndroid : GoogleAuthManager {
     private var context: Context
 
     init {
-
         kmAuthPlatformContext = KMAuthInitializer.getKMAuthPlatformContext()
         require(kmAuthPlatformContext?.context != null) {
             val message =
-                "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::init"
+                "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
             Logger.withTag(TAG).e(message)
             message
         }
-        require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
+        require(!KMAuthInitializer.getWebClientId(providerId).isNullOrEmpty()) {
             val message =
-                "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
             Logger.withTag(TAG).e(message)
             message
         }
 
-        webClientId = KMAuthInitializer.getWebClientId()!!
+        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
         context = kmAuthPlatformContext!!.context
         credentialManager = CredentialManager.create(context)
 

@@ -59,24 +59,24 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
     init {
 
-        require(!KMAuthInitializer.getWebClientId().isNullOrEmpty()) {
+        require(!KMAuthInitializer.getWebClientId(providerId).isNullOrEmpty()) {
             val message =
-                "webClientId should not be null or empty, Please set it in KMAuthInitializer::init"
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
             Logger.withTag(TAG).e(message)
             message
         }
 
-        webClientId = KMAuthInitializer.getWebClientId()!!
+        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
 
-        require(!KMAuthInitializer.getClientSecret().isNullOrEmpty()) {
+        require(!KMAuthInitializer.getClientSecret(providerId).isNullOrEmpty()) {
             val message =
-                "clientSecret should not be null or empty, Please set it in KMAuthInitializer::init or KMAuthInitializer::initClientSecret"
+                "clientSecret should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
             Logger.withTag(TAG).e(message)
             message
         }
 
-        webClientId = KMAuthInitializer.getWebClientId()!!
-        clientSecret = KMAuthInitializer.getClientSecret()!!
+        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
+        clientSecret = KMAuthInitializer.getClientSecret(providerId)!!
 
     }
 

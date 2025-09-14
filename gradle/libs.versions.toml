@@ -1,34 +1,39 @@
 [versions]
-agp = "8.9.3"
+agp = "8.12.0"
 coroutinesVersion = "1.10.2"
-googleApiClient = "2.7.2"
-googleHttpClientGson = "1.47.0"
+googleApiClient = "2.8.1"
+googleHttpClientGson = "2.0.0"
 googleOauthClient = "1.39.0"
-kotlin = "2.1.21"
+kotlin = "2.2.20"
 android-minSdk = "24"
-android-compileSdk = "35"
-kotlinxSerializationJson = "1.8.1"
-ktorServerCore = "3.1.2"
-gradle-maven-publish-plugin-version = "0.32.0"
+android-compileSdk = "36"
+kotlinxSerializationJson = "1.9.0"
+ktorServerCore = "3.2.3"
+gradle-maven-publish-plugin-version = "0.34.0"
 credentials = "1.5.0"
 firebaseAuth = "2.1.0"
 googleid = "1.1.1"
-kermit = "2.0.5"
+kermit = "2.0.8"
 
-android-targetSdk = "35"
-compose-plugin = "1.8.0"
+# Supabase
+supabaseVersion = "3.2.2"
+ktorVersion = "3.2.3"
+
+android-targetSdk = "36"
+compose-plugin = "1.8.2"
 androidx-activityCompose = "1.10.1"
-kotlinxBrowser = "0.3"
-kotlinxHtmlJs = "0.11.0"
-ktorClientCore = "3.1.3"
+kotlinxBrowser = "0.5.0"
+kotlinxHtmlJs = "0.12.0"
 
 [libraries]
-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutinesVersion" }
 google-api-client = { module = "com.google.api-client:google-api-client", version.ref = "googleApiClient" }
 google-http-client-gson = { module = "com.google.http-client:google-http-client-gson", version.ref = "googleHttpClientGson" }
 google-oauth-client = { module = "com.google.oauth-client:google-oauth-client", version.ref = "googleOauthClient" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorVersion" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktorVersion" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktorVersion" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorServerCore" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktorServerCore" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktorServerCore" }
@@ -40,11 +45,14 @@ googleid = { module = "com.google.android.libraries.identity.googleid:googleid",
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
-kotlinx-html-js = { module = "org.jetbrains.kotlinx:kotlinx-html-js", version.ref = "kotlinxHtmlJs" }
 
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientCore" }
-ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClientCore" }
+# Ktor Client
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorVersion" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorVersion" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorVersion" }
+
+# Supabase
+supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "supabaseVersion" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

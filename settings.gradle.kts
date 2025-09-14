@@ -18,6 +18,8 @@ rootProject.name = "KotlinMultiplatformAuth"
 include(
     ":kmauth-core",
     ":kmauth-google",
+    ":kmauth-apple",
+    ":kmauth-supabase",
     ":kmauth-google-compose",
     ":sample:composeApp"
 )

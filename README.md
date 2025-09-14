@@ -116,23 +116,20 @@ Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontal
 }
 
 
-// For Sign In With Apple or other OAuthProviders, you need to call handleDeepLink from iOSApp file(ie. entry point)
+// For all OAuthProviders except Apple, you need to call handleDeepLink from iOSApp file(ie. entry point)
 
-// Call this method in onOpenUrl method of iOSApp file:
+// Call this method in onOpenUrl method of iOSApp file, this is not needed for sign in with apple for iOS
+// becoz for iOS we are using AuthenticationServices + supabase signInWithIdToken but not signInWith oauth provider, but on Android, its needed:
 
 ContentView()
   .onOpenURL { url in
   
     // Handle supabase deep link url
-    //If using only kmauth-apple
-    KMAuthApple.shared.deepLinkHandler().handleDeepLinks(url: url)
-  
-    //If using kmauth-supabase directly
-    //KMAuthSupabase.shared.deepLinkHandler().handleDeepLinks(url: url)
+    //If using kmauth-supabase 
+    KMAuthSupabase.shared.deepLinkHandler().handleDeepLinks(url: url)
   }
 
-//Similarly for android, call this method in MainActivity:
-
+//Similarly for android, call this method in MainActivity, We need Android deep link handling code for Apple oauth provider as well along with other oauth providers of supabase:
 
 
 override fun onNewIntent(
@@ -231,7 +228,6 @@ listOf(
     isStatic = true
 
     // Here: Export it to iosApp xcode project for calling handleDeepLink
-    export("io.github.sunildhiman90:kmauth-apple:<version>") //if using Sign In with Apple
     export("io.github.sunildhiman90:kmauth-supabase:<version>") // if using Sign In with other OAuthProviders
   }
 }

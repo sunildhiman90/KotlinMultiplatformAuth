@@ -14,3 +14,5 @@ xcuserdata
 /sample/iosApp/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 /sample/iosApp/iosApp/iosApp.entitlements
 /sample/iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+/kotlin-js-store/wasm/yarn.lock
+/kotlin-js-store/yarn.lock

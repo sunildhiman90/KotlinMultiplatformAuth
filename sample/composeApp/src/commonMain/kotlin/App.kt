@@ -1,8 +1,10 @@
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,6 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.sunildhiman90.kmauth.core.KMAuthConfig
 import com.sunildhiman90.kmauth.apple.KMAuthApple
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
@@ -37,15 +40,20 @@ fun App() {
     )
 
 
-    //If you are using only supabase auth from kmauth, then you need to initialize KMAuthSupabase with KMAuthConfig.forSupabase
-    KMAuthSupabase.initialize(
-        KMAuthConfig.forSupabase(
-            supabaseUrl = "YOUR_SUPABASE_URL",
-            supabaseKey = "YOUR_SUPABASE_KEY",
-            deepLinkHost = "YOUR_DEEP_LINK_HOST",
-            deepLinkScheme = "YOUR_DEEP_LINK_SCHEME"
+    // If you are using kmauth-supabase auth or kmauth-apple auth , then you need to initialize KMAuthSupabase with KMAuthConfig.forSupabase
+    // TO test this, add your supabase supabaseUrl, supabaseKey, deepLinkHost, deepLinkScheme. Otherwise you can comment this code and its related code of supabaseAuthManager, otherwise app will crash
+    try {
+        KMAuthSupabase.initialize(
+            KMAuthConfig.forSupabase(
+                supabaseUrl = "YOUR_SUPABASE_URL",
+                supabaseKey = "YOUR_SUPABASE_KEY",
+                deepLinkHost = "YOUR_DEEP_LINK_HOST",
+                deepLinkScheme = "YOUR_DEEP_LINK_SCHEME"
+            )
         )
-    )
+    } catch (e: Exception) {
+        println("Error in KMAuthSupabase.initialize: ${e.message}")
+    }
 
     MaterialTheme {
         Column(
@@ -57,6 +65,7 @@ fun App() {
             //Ideally you will be using it from ViewModel or Repo
             val googleAuthManager = KMAuthGoogle.googleAuthManager
             val appleAuthManager = KMAuthApple.appleAuthManager
+            val supabaseAuthManager = KMAuthSupabase.getAuthManager()
 
             var userName: String? by remember {
                 mutableStateOf(
@@ -72,20 +81,44 @@ fun App() {
                     Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
                     Button(onClick = {
                         scope.launch {
-
-                            //Without callback, Recommended way
-                            /*val result = googleAuthManager.signIn()
+                            val result = googleAuthManager.signIn()
                             if (result.isSuccess) {
                                 println("Login Successful user: ${result.getOrNull()}")
                                 userName = result.getOrNull()?.name
                             } else {
                                 println("Error in google Sign In: ${result.exceptionOrNull()}")
-                            }*/
+                            }
+                        }
+                    }) {
+                        Text("Google Sign In")
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                            val result = KMAuthSupabase.getAuthManager().signInWith(
-                                supabaseOAuthProvider = SupabaseOAuthProvider.GOOGLE,
+                    Button(onClick = {
+                        scope.launch {
+
+                            val result = appleAuthManager.signIn()
+                            if (result.isSuccess) {
+                                println("Login Successful user: ${result.getOrNull()}")
+                                userName = result.getOrNull()?.name
+                            } else {
+                                println("Error in apple Sign In: ${result.exceptionOrNull()}")
+                            }
+                        }
+                    }) {
+                        Text("Apple Sign In")
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(onClick = {
+                        scope.launch {
+
+                            val result = supabaseAuthManager.signInWith(
+                                supabaseOAuthProvider = SupabaseOAuthProvider.FACEBOOK,
                             )
 
                             if (result.isSuccess && result.getOrNull() != null) {
@@ -105,46 +138,9 @@ fun App() {
                                 }
                             }
 
-                            //Using callback
-//                            googleAuthManager.signIn { user, error ->
-//                                if (error != null) {
-//                                    println("Error in google Sign In: $error")
-//                                }
-//                                if (user != null) {
-//                                    println("Login Successful user: $user")
-//                                    userName = user.name
-//                                }
-//                            }
                         }
                     }) {
-                        Text("Google Sign In")
-                    }
-
-                    Button(onClick = {
-                        scope.launch {
-
-                            //Without callback, Recommended way
-                            val result = appleAuthManager.signIn()
-                            if (result.isSuccess) {
-                                println("Login Successful user: ${result.getOrNull()}")
-                                userName = result.getOrNull()?.name
-                            } else {
-                                println("Error in apple Sign In: ${result.exceptionOrNull()}")
-                            }
-
-                            //Using callback
-//                            appleAuthManager.signIn { user, error ->
-//                                if (error != null) {
-//                                    println("Error in google Sign In: $error")
-//                                }
-//                                if (user != null) {
-//                                    println("Login Successful user: $user")
-//                                    userName = user.name
-//                                }
-//                            }
-                        }
-                    }) {
-                        Text("Apple Sign In")
+                        Text("Facebook Sign In")
                     }
                 }
             }
@@ -160,7 +156,8 @@ fun App() {
                         TextButton(
                             onClick = {
                                 scope.launch {
-                                    googleAuthManager.signOut(userName)
+                                    googleAuthManager.signOut()
+                                    appleAuthManager.signOut()
                                     userName = null
                                 }
                             }

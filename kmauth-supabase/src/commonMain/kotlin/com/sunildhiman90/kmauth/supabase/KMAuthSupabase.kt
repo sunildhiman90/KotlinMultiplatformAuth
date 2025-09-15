@@ -10,8 +10,10 @@ import com.sunildhiman90.kmauth.supabase.model.SupabaseDefaultAuthProvider
 import com.sunildhiman90.kmauth.supabase.model.SupabaseOAuthProvider
 import com.sunildhiman90.kmauth.supabase.model.SupabaseUser
 import com.sunildhiman90.kmauth.supabase.model.toSupabaseUser
+import com.sunildhiman90.kmauth.supabase.utils.toFlowType
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.FlowType
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
@@ -67,6 +69,7 @@ object KMAuthSupabase : CoroutineScope {
                     this.autoLoadFromStorage = config.autoLoadFromStorage
                     this.alwaysAutoRefresh = config.autoRefreshToken
                     redirectUrl?.let { this.defaultRedirectUrl = it }
+                    flowType = config.flowType?.toFlowType() ?: FlowType.IMPLICIT
 
                     //Android and ios deep links
                     config.deepLinkHost?.let { this.host = it }

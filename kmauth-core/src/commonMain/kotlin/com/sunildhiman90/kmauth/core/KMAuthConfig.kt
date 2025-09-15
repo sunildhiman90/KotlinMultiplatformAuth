@@ -14,7 +14,7 @@ data class KMAuthConfig(
      * A unique identifier for the provider (e.g., "google", "supabase").
      * This is used to store and retrieve the configuration for different providers.
      */
-    val providerId: String,
+    val providerId: String = "default",
 
     val kmAuthPlatformContext: KMAuthPlatformContext? = null,
     val webClientId: String? = null,
@@ -26,7 +26,8 @@ data class KMAuthConfig(
     val autoLoadFromStorage: Boolean = true,
     val autoRefreshToken: Boolean = true,
     val deepLinkHost: String? = null,
-    val deepLinkScheme: String? = null
+    val deepLinkScheme: String? = null,
+    val flowType: KMAuthSupabaseFlowType? = null
 ) {
     init {
         // Validate Supabase configuration if URL or key is provided
@@ -40,7 +41,6 @@ data class KMAuthConfig(
         /**
          * Creates a [KMAuthConfig] for Supabase authentication.
          *
-         * @param providerId A unique identifier for this provider
          * @param kmAuthPlatformContext The platform-specific context (e.g., Android Context).
          * @param supabaseUrl The Supabase project URL.
          * @param supabaseKey The Supabase anon/public key.
@@ -48,43 +48,41 @@ data class KMAuthConfig(
          * @param autoRefreshToken Whether to automatically refresh access tokens.
          * @param deepLinkHost The host for Android/ios deep links for oauth.
          * @param deepLinkScheme The scheme for Android/ios deep links for oauth.
+         * @param kmAuthSupabaseFlowType The flow type for Supabase authentication.
          */
         fun forSupabase(
-            providerId: String = "supabase",
             supabaseUrl: String,
             supabaseKey: String,
             kmAuthPlatformContext: KMAuthPlatformContext? = null,
             autoLoadFromStorage: Boolean = true,
             autoRefreshToken: Boolean = true,
             deepLinkHost: String? = null,
-            deepLinkScheme: String? = null
+            deepLinkScheme: String? = null,
+            kmAuthSupabaseFlowType: KMAuthSupabaseFlowType? = null
         ): KMAuthConfig = KMAuthConfig(
-            providerId = providerId,
             kmAuthPlatformContext = kmAuthPlatformContext,
             supabaseUrl = supabaseUrl,
             supabaseKey = supabaseKey,
             autoLoadFromStorage = autoLoadFromStorage,
             autoRefreshToken = autoRefreshToken,
             deepLinkHost = deepLinkHost,
-            deepLinkScheme = deepLinkScheme
+            deepLinkScheme = deepLinkScheme,
+            flowType = kmAuthSupabaseFlowType
         )
 
         /**
          * Creates a [KMAuthConfig] for Google authentication.
          *
-         * @param providerId A unique identifier for this provider (e.g., "google-main", "google-backup").
          * @param kmAuthPlatformContext The platform-specific context (e.g., Android Context).
          * @param webClientId The OAuth web client ID.
          * @param clientSecret The OAuth client secret.
          */
         fun forGoogle(
             webClientId: String,
-            providerId: String = "google",
             kmAuthPlatformContext: KMAuthPlatformContext? = null,
             clientSecret: String? = null
         ): KMAuthConfig {
             val kmAuthConfig = KMAuthConfig(
-                providerId = providerId,
                 webClientId = webClientId,
                 clientSecret = clientSecret
             )

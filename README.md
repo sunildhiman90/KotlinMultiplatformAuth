@@ -38,13 +38,17 @@ KMAuthInitializer.initialize(KMAuthConfig.forGoogle(webClientId = "YOUR_WEB_CLIE
 
 // For Sign In With Apple or other providers, we need to call KMAuthSupabase.initialize method from common code
 KMAuthSupabase.initialize(
-    KMAuthConfig.forSupabase(
+    config = KMAuthConfig.forSupabase(
         supabaseUrl = "YOUR_SUPABASE_URL",
         supabaseKey = "YOUR_SUPABASE_KEY",
         deepLinkHost = "YOUR_DEEP_LINK_HOST",
         deepLinkScheme = "YOUR_DEEP_LINK_SCHEME",
-    )
+    ),
+    redirectUrl = "YOUR_REDIRECT_URL"
 )
+
+// Also if you need to provide different redirect urls, you can call KMAuthSupabase.initialize method from platform specific code for each platform.
+// Also sometime if supabase does not pickup redirect urls from supabase dashboard, in that case you can provide it in initialize method.
 ```
 
 We need webClientId from Google Cloud Platform Console to setup the serverClientId in Google API for

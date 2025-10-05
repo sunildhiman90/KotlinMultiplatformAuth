@@ -9,6 +9,7 @@ import io.github.jan.supabase.auth.providers.Github
 import io.github.jan.supabase.auth.providers.Gitlab
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.IDTokenProvider
+import io.github.jan.supabase.auth.providers.Keycloak
 import io.github.jan.supabase.auth.providers.LinkedIn
 import io.github.jan.supabase.auth.providers.OAuthProvider
 import io.github.jan.supabase.auth.providers.Slack
@@ -29,6 +30,7 @@ enum class SupabaseOAuthProvider {
     SPOTIFY,
     TWITCH,
     LINKEDIN,
+    KEYCLOAK,
 
     // IDTokenProviders
     GOOGLE,
@@ -51,6 +53,7 @@ enum class SupabaseOAuthProvider {
             LINKEDIN -> LinkedIn
             APPLE -> Apple
             AZURE -> Azure
+            KEYCLOAK -> Keycloak
         }
     }
 

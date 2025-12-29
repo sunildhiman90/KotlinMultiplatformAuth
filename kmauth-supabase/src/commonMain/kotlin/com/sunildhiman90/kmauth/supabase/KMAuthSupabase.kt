@@ -168,6 +168,17 @@ object KMAuthSupabase : CoroutineScope {
     }
 
     /**
+     * Sign up with a default auth provider using the default auth manager.
+     * Supports Email and Phone providers for creating new user accounts.
+     */
+    suspend fun signUpWithDefaultAuthProvider(
+        supabaseDefaultAuthProvider: SupabaseDefaultAuthProvider,
+        config: SupabaseAuthConfig = SupabaseAuthConfig(),
+    ) {
+        getAuthManager().signUpWith(supabaseDefaultAuthProvider, config)
+    }
+
+    /**
      * Extension function to sign out using the default auth manager.
      */
     suspend fun signOut() {

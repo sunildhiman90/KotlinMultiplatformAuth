@@ -277,6 +277,123 @@ class SupabaseAuthManager(
     }
 
     /**
+     * Sign up with a supabase [io.github.jan.supabase.auth.providers.builtin.DefaultAuthProvider].
+     * It supports Email and Phone providers for creating new user accounts.
+     * Note: OAuth providers and ID Token handle registration automatically during sign-in.
+     *
+     * @param supabaseDefaultAuthProvider: [SupabaseDefaultAuthProvider] The default auth provider to sign up with.
+     * @param config: [SupabaseAuthConfig] The configuration for the sign up operation.
+     * @return A [Result] containing the result of the sign up operation of type [SupabaseUser].
+     */
+    suspend fun signUpWith(
+        supabaseDefaultAuthProvider: SupabaseDefaultAuthProvider,
+        config: SupabaseAuthConfig = SupabaseAuthConfig(),
+    ): Result<SupabaseUser?> = suspendCancellableCoroutine { continuation ->
+        this.continuation = continuation
+
+        val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+            Logger.withTag("SupabaseAuthManager")
+                .e("Supabase signUp with $supabaseDefaultAuthProvider failed: $exception")
+            KMAuthSupabase.updateSupabaseUserResult(Result.failure(Exception("Supabase signUp with $supabaseDefaultAuthProvider failed: $exception")))
+            this@SupabaseAuthManager.continuation?.resume(Result.failure(Exception("Supabase signUp with $supabaseDefaultAuthProvider failed: $exception")))
+            sessionJob?.cancel("SupabaseAuthManager Registration failed exceptionHandler: $exception")
+        }
+
+        launch(exceptionHandler) {
+            try {
+                // Define configuration blocks for each provider type
+                val emailConfig: Email.Config.() -> Unit = {
+                    email = config.email
+                    password = config.password
+                }
+
+                val phoneConfig: Phone.Config.() -> Unit = {
+                    phone = config.phone
+                    password = config.password
+                    channel = config.channel.toSupabaseChannel()
+                }
+
+                // Execute the appropriate sign-up with the pre-configured blocks
+                when (supabaseDefaultAuthProvider) {
+                    SupabaseDefaultAuthProvider.EMAIL -> {
+                        if (redirectUrl != null) {
+                            supabaseClient.auth.signUpWith(
+                                Email,
+                                redirectUrl = redirectUrl,
+                                config = emailConfig
+                            )
+                        } else {
+                            supabaseClient.auth.signUpWith(Email, config = emailConfig)
+                        }
+                    }
+
+                    SupabaseDefaultAuthProvider.PHONE -> {
+                        if (redirectUrl != null) {
+                            supabaseClient.auth.signUpWith(
+                                Phone,
+                                redirectUrl = redirectUrl,
+                                config = phoneConfig
+                            )
+                        } else {
+                            supabaseClient.auth.signUpWith(Phone, config = phoneConfig)
+                        }
+                    }
+
+                    SupabaseDefaultAuthProvider.ID_TOKEN -> {
+                        // ID Token doesn't have a separate sign-up flow
+                        // It should use signInWith which handles both sign-in and registration
+                        throw IllegalArgumentException("ID_TOKEN provider does not support signUpWith. Use signInWith instead, which handles both sign-in and registration automatically.")
+                    }
+                }
+
+                sessionJob?.cancel()
+                sessionJob = launch(exceptionHandler) {
+                    supabaseClient.auth.sessionStatus.collect { sessionStatus ->
+                        Logger.withTag("SupabaseAuthManager").i("sessionStatus: $sessionStatus")
+                        when (sessionStatus) {
+                            is SessionStatus.Initializing -> {
+                                Logger.i("Initializing")
+                            }
+
+                            is SessionStatus.Authenticated -> {
+                                Logger.i("Authenticated")
+                                val supabaseUser = sessionStatus.session.user
+                                val accessToken = sessionStatus.session.accessToken
+                                val user =
+                                    supabaseUser?.toSupabaseUser()?.copy(accessToken = accessToken)
+                                this@SupabaseAuthManager.continuation?.resume(Result.success(user))
+                                // cancel the sessionJob
+                                cancel("Registration completed")
+                            }
+
+                            else -> {
+                                Logger.i("SupabaseAuthManager sessionStatus: $sessionStatus")
+                            }
+                        }
+                    }
+                }.apply {
+                    invokeOnCompletion { cause ->
+                        Logger.withTag("SupabaseAuthManager")
+                            .d("Session collection completed: ${cause?.message ?: "Completed"}")
+                        if (cause is CancellationException) {
+                            Logger.withTag("SupabaseAuthManager")
+                                .d("Session collection was cancelled: ${cause.message}")
+                        }
+                        sessionJob = null
+                    }
+                }
+            } catch (e: Exception) {
+                Logger.withTag("SupabaseAuthManager")
+                    .e("Supabase signUp with $supabaseDefaultAuthProvider failed: $e")
+                KMAuthSupabase.updateSupabaseUserResult(Result.failure(Exception("Supabase signUp with $supabaseDefaultAuthProvider failed: $e")))
+                this@SupabaseAuthManager.continuation?.resume(Result.failure(Exception("Supabase signUp with $supabaseDefaultAuthProvider failed: $e")))
+                sessionJob?.cancel("SupabaseAuthManager Registration failed: $e")
+
+            }
+        }
+    }
+
+    /**
      * Reset password for a user using their email.
      */
     suspend fun resetPasswordForEmail(

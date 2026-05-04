@@ -33,8 +33,17 @@ KMAuthInitializer.initContext(
     kmAuthPlatformContext = KMAuthPlatformContext(this)
 )
 
-//For Sign In With Google, Then we need to call initialize method from common code
-KMAuthInitializer.initialize(KMAuthConfig.forGoogle(webClientId = "YOUR_WEB_CLIENT_ID"))
+// For Sign In With Google, call initialize method from common code.
+// For Desktop (JVM) platform, googleClientRedirectHost defaults to "localhost:8080".
+// IMPORTANT: The port you set here must match exactly with what you have added in your Google Cloud Console "Authorized redirect URIs" (e.g., http://localhost:8080/callback).
+// If you have configured a different port in the Google Console (like 56502), you must set the same here.
+KMAuthInitializer.initialize(
+    KMAuthConfig.forGoogle(
+        webClientId = "YOUR_WEB_CLIENT_ID",
+        googleClientRedirectHost = "localhost:56502", // Optional: Defaults to "localhost:8080"
+        googleClientRedirectScheme = "http"          // Optional: Defaults to "http"
+    )
+)
 
 // For Sign In With Apple or other providers, we need to call KMAuthSupabase.initialize method from common code
 KMAuthSupabase.initialize(
@@ -53,6 +62,13 @@ KMAuthSupabase.initialize(
 
 We need webClientId from Google Cloud Platform Console to setup the serverClientId in Google API for
 identifying signed-in users in backend server.
+
+### Best Practices for Desktop (JVM)
+
+When deploying a Desktop application, ensure a smooth login experience:
+
+1.  **Match App Configuration**: Ensure the `googleClientRedirectHost` in your code matches the port you've registered in your Google Cloud Console's **Authorized redirect URIs** (e.g., `http://localhost:8080/callback`).
+2.  **Port Availability**: Make sure the port you choose (default is 8080) is not being used by other services on your machine.
 
 ### GoogleAuthManager, AppleAuthManager and SupabaseAuthManager
 
@@ -379,7 +395,8 @@ KMAuthInitializer.initClientSecret(
 )
 ```
 Alternatively, you can setup clientSecret in KMAuthInitializer.initialize method itself from app composable. Then you dont need to set it here.
-2. You also need to make sure you have added the redirect url in web client in google cloud platform oauth clients in **Authorized redirect URIs**: http://localhost:8080/callback, And this may take some time to reflect updates in your code while running your code.
+2. **Authorized redirect URIs**: You must add your loopback URI to the Google Cloud Console's **Authorized redirect URIs** section (e.g., `http://localhost:8080/callback`).
+    *   **IMPORTANT**: The port you set in your `KMAuthConfig` (default is 8080) must match exactly with what you have added in the Google Console.
 
 #### Web (Kotlin/Js and Kotlin/Wasm)
 
@@ -483,5 +500,3 @@ Feel free to contribute if you finds any issues or bugs or want to add a new aut
 
 ## Used By Projects List
 Checkout a voluntary list of projects/companies using KotlinMultiplatformAuth: https://github.com/sunildhiman90/KotlinMultiplatformAuth/discussions/3. Feel free to add your project!
-
-

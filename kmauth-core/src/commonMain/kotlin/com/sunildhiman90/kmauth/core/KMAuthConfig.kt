@@ -27,6 +27,8 @@ data class KMAuthConfig(
     val autoRefreshToken: Boolean = true,
     val deepLinkHost: String? = null,
     val deepLinkScheme: String? = null,
+    val googleClientRedirectHost: String? = "localhost:8080",
+    val googleClientRedirectScheme: String? = "http",
     val flowType: KMAuthSupabaseFlowType? = null
 ) {
     init {
@@ -80,11 +82,15 @@ data class KMAuthConfig(
         fun forGoogle(
             webClientId: String,
             kmAuthPlatformContext: KMAuthPlatformContext? = null,
-            clientSecret: String? = null
+            clientSecret: String? = null,
+            googleClientRedirectHost: String? = "localhost:8080",
+            googleClientRedirectScheme: String? = "http"
         ): KMAuthConfig {
             val kmAuthConfig = KMAuthConfig(
                 webClientId = webClientId,
-                clientSecret = clientSecret
+                clientSecret = clientSecret,
+                googleClientRedirectHost = googleClientRedirectHost,
+                googleClientRedirectScheme = googleClientRedirectScheme
             )
             return if (kmAuthPlatformContext != null) {
                 kmAuthConfig.copy(

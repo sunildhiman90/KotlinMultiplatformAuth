@@ -52,7 +52,18 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? =
         null
 
-    private val redirectUri = "http://localhost:8080/callback" // Ktor will listen on this URI
+    private var actualPort: Int = DEFAULT_PORT
+    private val redirectUri: String
+        get() {
+            val host = KMAuthInitializer.getGoogleClientRedirectHost(providerId) ?: "localhost"
+            val hostWithoutPort = host.split(":").first()
+            val scheme = KMAuthInitializer.getGoogleClientRedirectScheme(providerId) ?: "http"
+            return "$scheme://$hostWithoutPort:$actualPort/callback"
+        }
+    private fun getPort(): Int {
+        val host = KMAuthInitializer.getGoogleClientRedirectHost(providerId) ?: return DEFAULT_PORT
+        return host.split(":").lastOrNull()?.toIntOrNull() ?: DEFAULT_PORT
+    }
     private var uniqueUserId: String? = null
     private var onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
     private var scope = CoroutineScope(Dispatchers.IO)
@@ -77,7 +88,6 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
         webClientId = KMAuthInitializer.getWebClientId(providerId)!!
         clientSecret = KMAuthInitializer.getClientSecret(providerId)!!
-
     }
 
     override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
@@ -110,7 +120,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private fun startHttpServer(
         flow: GoogleAuthorizationCodeFlow,
         onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null,
-        port: Int = 8080
+        port: Int = actualPort
     ): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
         Logger.d("Starting HTTP server on port $port")
         val server = embeddedServer(Netty, port = port) {
@@ -193,6 +203,18 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
         return server
     }
 
+    private fun findAvailablePort(startPort: Int): Int {
+        var port = startPort
+        while (port < startPort + 100) {
+            try {
+                java.net.ServerSocket(port).use { return port }
+            } catch (e: Exception) {
+                port++
+            }
+        }
+        return startPort
+    }
+
     private fun performShutdownCleanup() {
         scope.launch {
             try {
@@ -223,7 +245,10 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
             val flow = initializeGoogleAuthCodeFlow()
 
+            actualPort = getPort()
+            Logger.d("Using Redirect URI: $redirectUri")
             val authorizationUrl = flow.newAuthorizationUrl().setRedirectUri(redirectUri).build()
+            Logger.d("Opening Authorization URL: $authorizationUrl")
 
             // Open the user's default web browser to authenticate
             if (Desktop.isDesktopSupported()) {
@@ -234,7 +259,17 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             // We need to reinitialize the scope, otherwise it will throw exception second time becoz we are cancelling the scope after stopping the server and cancelled scope can not be used to launch coroutine again without recreating new scope
             scope = CoroutineScope(Dispatchers.IO)
             scope.launch {
-                server = startHttpServer(flow, onSignResult)
+                try {
+                    server = startHttpServer(flow, onSignResult, actualPort)
+                } catch (e: Exception) {
+                    val errorMessage = if (e is java.net.BindException || e.message?.contains("Address already in use") == true) {
+                        "Port $actualPort is already in use. Please ensure no other service is using this port or configure a different port in KMAuthConfig.forGoogle(googleClientRedirectHost = \"localhost:YOUR_PORT\") and register it in Google Cloud Console web client as well."
+                    } else {
+                        "Failed to start local server for Google Auth: ${e.message}"
+                    }
+                    Logger.e(errorMessage)
+                    onSignResult?.invoke(null, Exception(errorMessage, e))
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -323,5 +358,6 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
     companion object {
         private const val TAG = "GoogleAuthManagerJvm"
+        private const val DEFAULT_PORT = 8080
     }
 }

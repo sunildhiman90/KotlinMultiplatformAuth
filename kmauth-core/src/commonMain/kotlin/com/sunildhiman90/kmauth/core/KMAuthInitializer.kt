@@ -25,7 +25,13 @@ object KMAuthInitializer {
             supabaseUrl = config.supabaseUrl ?: existingConfig.supabaseUrl,
             supabaseKey = config.supabaseKey ?: existingConfig.supabaseKey,
             kmAuthPlatformContext = config.kmAuthPlatformContext
-                ?: existingConfig.kmAuthPlatformContext
+                ?: existingConfig.kmAuthPlatformContext,
+            deepLinkHost = config.deepLinkHost ?: existingConfig.deepLinkHost,
+            deepLinkScheme = config.deepLinkScheme ?: existingConfig.deepLinkScheme,
+            googleClientRedirectHost = config.googleClientRedirectHost
+                ?: existingConfig.googleClientRedirectHost,
+            googleClientRedirectScheme = config.googleClientRedirectScheme
+                ?: existingConfig.googleClientRedirectScheme
         )
             ?: config
 
@@ -83,6 +89,36 @@ object KMAuthInitializer {
      * @return The platform context or null if not initialized.
      */
     fun getKMAuthPlatformContext(): KMAuthPlatformContext? = kmAuthPlatformContext
+
+    /**
+     * Gets the deep link host from the configuration of the specified provider.
+     *
+     * @return The deep link host or null if not configured.
+     */
+    fun getDeepLinkHost(providerId: String): String? = configs[providerId]?.deepLinkHost
+
+    /**
+     * Gets the deep link scheme from the configuration of the specified provider.
+     *
+     * @return The deep link scheme or null if not configured.
+     */
+    fun getDeepLinkScheme(providerId: String): String? = configs[providerId]?.deepLinkScheme
+
+    /**
+     * Gets the google client redirect host from the configuration of the specified provider.
+     *
+     * @return The google client redirect host or null if not configured.
+     */
+    fun getGoogleClientRedirectHost(providerId: String): String? =
+        configs[providerId]?.googleClientRedirectHost
+
+    /**
+     * Gets the google client redirect scheme from the configuration of the specified provider.
+     *
+     * @return The google client redirect scheme or null if not configured.
+     */
+    fun getGoogleClientRedirectScheme(providerId: String): String? =
+        configs[providerId]?.googleClientRedirectScheme
 
     // Deprecated methods for backward compatibility
     @Deprecated(

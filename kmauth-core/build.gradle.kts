@@ -36,14 +36,12 @@ kotlin {
         nodejs()
         browser()
         binaries.library()
-        binaries.executable()
     }
 
     wasmJs {
         nodejs()
         browser()
         binaries.library()
-        binaries.executable()
     }
 
     sourceSets {

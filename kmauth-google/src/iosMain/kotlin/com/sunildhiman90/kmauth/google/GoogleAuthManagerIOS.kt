@@ -1,13 +1,11 @@
 package com.sunildhiman90.kmauth.google
+
 import co.touchlab.kermit.Logger
 import cocoapods.GoogleSignIn.GIDSignIn
-import com.sunildhiman90.kmauth.core.KMAuthInitializer
-import com.sunildhiman90.kmauth.core.KMAuthPlatformContext
 import com.sunildhiman90.kmauth.core.KMAuthUser
 import com.sunildhiman90.kmauth.core.toThrowable
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import platform.Foundation.NSError
 import platform.UIKit.UIApplication
 import kotlin.coroutines.resume
 
@@ -70,7 +68,7 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
                     continuation.resume(Result.success(user))
                 } else {
                     // Resume coroutine with a value provided by the callback
-                    continuation.resume(Result.failure(Exception("Error in google Sign In: $error")))
+                    continuation.resume(Result.failure(error))
                 }
             }
             signInCore(onSignResult)

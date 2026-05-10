@@ -12,25 +12,19 @@ import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.gson.Gson
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthUser
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.install
-import io.ktor.server.engine.EmbeddedServer
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import io.ktor.server.netty.NettyApplicationEngine
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -40,9 +34,8 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.util.UUID
+import java.util.*
 import kotlin.coroutines.resume
-import kotlin.jvm.java
 
 
 internal class GoogleAuthManagerJvm : GoogleAuthManager {
@@ -60,10 +53,12 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             val scheme = KMAuthInitializer.getGoogleClientRedirectScheme(providerId) ?: "http"
             return "$scheme://$hostWithoutPort:$actualPort/callback"
         }
+
     private fun getPort(): Int {
         val host = KMAuthInitializer.getGoogleClientRedirectHost(providerId) ?: return DEFAULT_PORT
         return host.split(":").lastOrNull()?.toIntOrNull() ?: DEFAULT_PORT
     }
+
     private var uniqueUserId: String? = null
     private var onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
     private var scope = CoroutineScope(Dispatchers.IO)
@@ -103,7 +98,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                     continuation.resume(Result.success(user))
                 } else {
                     // Resume coroutine with a value provided by the callback
-                    continuation.resume(Result.failure(Exception("Error in google Sign In: $error")))
+                    continuation.resume(Result.failure(error))
                 }
             }
 

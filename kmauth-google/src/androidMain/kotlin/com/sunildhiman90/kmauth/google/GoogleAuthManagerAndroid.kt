@@ -13,7 +13,6 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.sunildhiman90.kmauth.core.KMAuthConfig
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
 import com.sunildhiman90.kmauth.core.KMAuthPlatformContext
 import com.sunildhiman90.kmauth.core.KMAuthUser
@@ -117,7 +116,7 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
                     continuation.resume(Result.success(user))
                 } else {
                     // Resume coroutine with a value provided by the callback
-                    continuation.resume(Result.failure(Exception("Error in google Sign In: $error")))
+                    continuation.resume(Result.failure(error))
                 }
             }
             signInCore(onSignResult)

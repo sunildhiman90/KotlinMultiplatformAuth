@@ -21,7 +21,10 @@ include(
     ":kmauth-apple",
     ":kmauth-supabase",
     ":kmauth-google-compose",
-    ":sample:composeApp"
+    ":sample:shared",
+    ":sample:androidApp",
+    ":sample:desktopApp",
+    ":sample:webApp"
 )
 
 //type safe project accessors

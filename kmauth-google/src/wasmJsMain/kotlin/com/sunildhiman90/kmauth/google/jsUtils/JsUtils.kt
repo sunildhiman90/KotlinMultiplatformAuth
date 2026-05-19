@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package com.sunildhiman90.kmauth.google.jsUtils
+
 
 import com.sunildhiman90.kmauth.google.externals.CredentialResponse
 import com.sunildhiman90.kmauth.google.externals.GoogleIdConfiguration
@@ -104,7 +107,7 @@ internal fun fetchGoogleUserInfo(url: String, accessToken: String): JsAny = js(
     """
 )
 
-internal fun convertToGoogleUserInfo(userInfo: JsAny): GoogleUserJs = js(
+internal fun convertToGoogleUserInfo(userInfo: JsAny?): GoogleUserJs = js(
     """
     ({
         id: userInfo.id,

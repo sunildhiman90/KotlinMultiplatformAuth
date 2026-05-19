@@ -1,14 +1,14 @@
 [versions]
-agp = "8.13.2"
+agp = "9.2.1"
 coroutinesVersion = "1.10.2"
 googleApiClient = "2.9.0"
 googleHttpClientGson = "2.1.0"
 googleOauthClient = "1.39.0"
-kotlin = "2.3.20"
+kotlin = "2.3.21"
 android-minSdk = "24"
 android-compileSdk = "36"
 kotlinxSerializationJson = "1.11.0"
-ktorServerCore = "3.4.2"
+ktorServerCore = "3.5.0"
 gradle-maven-publish-plugin-version = "0.36.0"
 credentials = "1.6.0"
 firebaseAuth = "2.1.0"
@@ -16,11 +16,11 @@ googleid = "1.2.0"
 kermit = "2.1.0"
 
 # Supabase
-supabaseVersion = "3.5.0"
-ktorVersion = "3.4.2"
+supabaseVersion = "3.6.0"
+ktorVersion = "3.5.0"
 
 android-targetSdk = "36"
-compose-plugin = "1.10.3"
+compose-plugin = "1.11.0"
 androidx-activityCompose = "1.13.0"
 kotlinxBrowser = "0.5.0"
 kotlinxHtmlJs = "0.12.0"
@@ -55,7 +55,7 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "supabaseVersion" }
 
 [plugins]
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidKmpLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }

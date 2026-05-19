@@ -340,6 +340,7 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
     // Official RequestInit issue: https://github.com/Kotlin/kotlinx-browser/issues/17
     // So using our custom RequestInit, But Official RequestInit working fine in JS, becoz there its being used from dom, but here kotlinx-browser
+    @OptIn(ExperimentalWasmJsInterop::class)
     private suspend fun getGoogleUserJsInfo(accessToken: String): GoogleUserJs? {
         try {
 
@@ -362,7 +363,8 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
                 Logger.e("Failed to get user info: $error")
                 return null
             }
-            return convertToGoogleUserInfo(response.json().await<JsAny>())
+
+            return convertToGoogleUserInfo(response.json().await())
 
             //This will not work here
             //return Json.decodeFromString<GoogleUser>(response.json().await<JsAny>())

@@ -239,7 +239,6 @@ commonMain.dependencies {
 
 //And for Sign In With Google or other OAuthProviders, you need to export api dependencies using export
 listOf(
-  iosX64(),
   iosArm64(),
   iosSimulatorArm64()
 ).forEach { iosTarget ->

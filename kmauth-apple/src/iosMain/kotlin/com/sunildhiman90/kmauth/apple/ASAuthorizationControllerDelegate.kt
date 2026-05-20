@@ -192,7 +192,7 @@ class ASAuthorizationControllerDelegate(
     }
 
 
-    override fun presentationAnchorForAuthorizationController(controller: ASAuthorizationController): ASPresentationAnchor? {
+    override fun presentationAnchorForAuthorizationController(controller: ASAuthorizationController): ASPresentationAnchor {
         return UIApplication.sharedApplication.keyWindow
     }
 

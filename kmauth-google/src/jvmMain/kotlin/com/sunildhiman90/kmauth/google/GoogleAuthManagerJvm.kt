@@ -9,8 +9,8 @@ import com.google.api.client.http.HttpRequestFactory
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.util.store.FileDataStoreFactory
-import com.google.gson.Gson
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
+import kotlinx.serialization.json.Json
 import com.sunildhiman90.kmauth.core.KMAuthUser
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -150,7 +150,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                             val request = requestFactory.buildGetRequest(url)
                             val response = request.execute()
                             val userInfoString = response.parseAsString()
-                            val userInfo = Gson().fromJson(userInfoString, GoogleUser::class.java)
+                            val userInfo = json.decodeFromString<GoogleUser>(userInfoString)
 
                             val callback = onSignResult ?: this@GoogleAuthManagerJvm.onSignResult
                             callback?.invoke(
@@ -341,18 +341,9 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
         }
     }
 
-    private data class GoogleUser(
-        val id: String,
-        val email: String,
-        val verified_email: Boolean,
-        val name: String,
-        val given_name: String,
-        val family_name: String,
-        val picture: String
-    )
-
     companion object {
         private const val TAG = "GoogleAuthManagerJvm"
         private const val DEFAULT_PORT = 8080
+        private val json = Json { ignoreUnknownKeys = true }
     }
 }

@@ -87,37 +87,23 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private var scope = CoroutineScope(Dispatchers.IO)
 
     init {
-        require(!KMAuthInitializer.getWebClientId(providerId).isNullOrEmpty()) {
-            val message =
-                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
-            Logger.withTag(TAG).e(message)
-            message
-        }
-
-        require(!KMAuthInitializer.getClientSecret(providerId).isNullOrEmpty()) {
-            val message =
-                "(GoogleAuthManagerJvm) clientSecret should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
-            Logger.withTag(TAG).e(message)
-            message
-        }
-
-        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
-        clientSecret = KMAuthInitializer.getClientSecret(providerId)!!
+        webClientId = KMAuthInitializer.getWebClientId(providerId) ?: ""
+        clientSecret = KMAuthInitializer.getClientSecret(providerId) ?: ""
     }
 
     override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
         this.onSignResult = onSignResult
-        launchGoogleSignIn()
+        launchGoogleSignIn(onSignResult)
     }
 
     override suspend fun signIn(): Result<KMAuthUser?> {
         return suspendCancellableCoroutine { continuation ->
             val onSignResult: (KMAuthUser?, Throwable?) -> Unit = { user, error ->
                 if (error == null) {
-                    // Resume coroutine with an exception provided by the callback
+                    // Resume coroutine with a value provided by the callback
                     continuation.resume(Result.success(user))
                 } else {
-                    // Resume coroutine with a value provided by the callback
+                    // Resume coroutine with an exception provided by the callback
                     continuation.resume(Result.failure(error))
                 }
             }
@@ -192,6 +178,8 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                         } catch (e: Exception) {
                             e.printStackTrace()
                             Logger.e(e.message.toString())
+                            val callback = onSignResult ?: this@GoogleAuthManagerJvm.onSignResult
+                            callback?.invoke(null, e)
                             call.respondText(
                                 "Some error in receiving code parameter: $e, Please try again from app",
                                 ContentType.Text.Plain,
@@ -200,6 +188,8 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                         }
                     } else {
                         Logger.d("Missing code parameter.")
+                        val callback = onSignResult ?: this@GoogleAuthManagerJvm.onSignResult
+                        callback?.invoke(null, IllegalStateException("Missing authorization code parameter in redirect callback"))
                         call.respondText(
                             "Missing code parameter.Please try again from app",
                             ContentType.Text.Plain,
@@ -307,10 +297,29 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private fun launchGoogleSignIn(
         onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null
     ) {
+        val callback = onSignResult ?: this.onSignResult
+
+        val currentWebClientId = KMAuthInitializer.getWebClientId(providerId) ?: webClientId
+        if (currentWebClientId.isEmpty()) {
+            val message =
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
+            Logger.withTag(TAG).e(message)
+            callback?.invoke(null, IllegalStateException(message))
+            return
+        }
+        webClientId = currentWebClientId
+
+        val currentClientSecret = KMAuthInitializer.getClientSecret(providerId) ?: clientSecret
+        if (currentClientSecret.isEmpty()) {
+            val message =
+                "(GoogleAuthManagerJvm) clientSecret should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
+            Logger.withTag(TAG).e(message)
+            callback?.invoke(null, IllegalStateException(message))
+            return
+        }
+        clientSecret = currentClientSecret
 
         try {
-            clientSecret = KMAuthInitializer.getClientSecret(providerId) ?: clientSecret
-
             // Generate PKCE code verifier and code challenge
             val verifier = PkceUtils.generateCodeVerifier()
             codeVerifier = verifier
@@ -337,7 +346,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             scope = CoroutineScope(Dispatchers.IO)
             scope.launch {
                 try {
-                    server = startHttpServer(flow, onSignResult, actualPort)
+                    server = startHttpServer(flow, callback, actualPort)
                 } catch (e: Exception) {
                     val errorMessage = if (e is java.net.BindException || e.message?.contains("Address already in use") == true) {
                         "Port $actualPort is already in use. Please ensure no other service is using this port or configure a different port in KMAuthConfig.forGoogle(googleClientRedirectHost = \"localhost:YOUR_PORT\") and register it in Google Cloud Console web client as well."
@@ -345,13 +354,13 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                         "Failed to start local server for Google Auth: ${e.message}"
                     }
                     Logger.e(errorMessage)
-                    onSignResult?.invoke(null, Exception(errorMessage, e))
+                    callback?.invoke(null, Exception(errorMessage, e))
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
             Logger.e("Not able to start the server: ${e.message.toString()}")
-            onSignResult?.invoke(null, e)
+            callback?.invoke(null, e)
         }
     }
 

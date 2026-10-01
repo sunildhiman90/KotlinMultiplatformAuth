@@ -51,24 +51,18 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
     private var continuation: CancellableContinuation<Result<KMAuthUser?>>? = null
 
     init {
-
-        require(!KMAuthInitializer.getWebClientId(providerId).isNullOrEmpty()) {
-            val message =
-                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
-            Logger.withTag(TAG).e(message)
-            message
-        }
-
-        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
+        webClientId = KMAuthInitializer.getWebClientId(providerId) ?: ""
 
         loadGoogleSignInLibrary {
             Logger.d("Google sign in library loaded")
             isLibraryLoaded = true
 
             //for one tap prompt
-            initializeGoogleSignIn(
-                webClientId
-            )
+            if (webClientId.isNotEmpty()) {
+                initializeGoogleSignIn(
+                    webClientId
+                )
+            }
         }
     }
 
@@ -92,7 +86,11 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
             }
         }
         // Append the script to the document head
-        if (!alreadyAdded) document.head?.appendChild(script)
+        if (!alreadyAdded) {
+            document.head?.appendChild(script)
+        } else {
+            onLoad()
+        }
     }
 
     private fun initializeGoogleSignIn(
@@ -101,16 +99,16 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
         Logger.i("initializeGoogleSignIn")
 
-        require(clientId.isNotEmpty()) {
+        if (clientId.isEmpty()) {
             val error = "clientId should not be null or empty"
             Logger.d(error)
-            error
+            return
         }
 
-        check(isLibraryLoaded) {
+        if (!isLibraryLoaded) {
             val error = "Google sign in library is not loaded"
             Logger.d(error)
-            error
+            return
         }
 
 
@@ -168,6 +166,7 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
 
         val config = googleIdConfig(clientId, callbackFunction)
         google.accounts.id.initialize(config)
+        isGoogleClientInitialized = true
 
         addGoogleSignInButton()
         renderGoogleSignInButton(GOOGLE_BUTTON_ID)
@@ -226,6 +225,18 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
         onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null,
         scopes: List<String>
     ) {
+        val currentClientId = KMAuthInitializer.getWebClientId(providerId) ?: webClientId
+        if (currentClientId.isEmpty()) {
+            val message =
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
+            Logger.withTag(TAG).e(message)
+            val exception = IllegalStateException(message)
+            continuation?.resume(Result.failure(exception))
+            onSignResult?.invoke(null, exception)
+            return
+        }
+        webClientId = currentClientId
+
         val callbackFunction: (TokenResponse) -> Unit = { response ->
             Logger.d("initTokenClient: callbackFunction")
 
@@ -294,8 +305,25 @@ internal class GoogleAuthManagerWasmJs : GoogleAuthManager {
         continuation: CancellableContinuation<Result<KMAuthUser?>>? = null,
         onSignResult: ((KMAuthUser?, Throwable?) -> Unit)? = null,
     ) {
+        val currentClientId = KMAuthInitializer.getWebClientId(providerId) ?: webClientId
+        if (currentClientId.isEmpty()) {
+            val message =
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
+            Logger.withTag(TAG).e(message)
+            val exception = IllegalStateException(message)
+            continuation?.resume(Result.failure(exception))
+            onSignResult?.invoke(null, exception)
+            return
+        }
+        webClientId = currentClientId
+
         this.onSignResult = onSignResult
         this.continuation = continuation
+
+        if (!isGoogleClientInitialized && isLibraryLoaded) {
+            initializeGoogleSignIn(webClientId)
+        }
+
         triggerSignInUsingButton()
     }
 

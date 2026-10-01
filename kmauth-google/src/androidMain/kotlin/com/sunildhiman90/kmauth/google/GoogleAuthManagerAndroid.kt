@@ -28,30 +28,17 @@ import kotlin.coroutines.resume
 // Later on we will remove this and use providerId "google" by overriding the providerId form GoogleAuthManager
 internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
 
-    private var credentialManager: CredentialManager
-    private var kmAuthPlatformContext: KMAuthPlatformContext? = null
-    private var webClientId: String
-    private var context: Context
+    private var credentialManager: CredentialManager? = null
+    private var webClientId: String? = null
+    private var context: Context? = null
 
     init {
-        kmAuthPlatformContext = KMAuthInitializer.getKMAuthPlatformContext()
-        require(kmAuthPlatformContext?.context != null) {
-            val message =
-                "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
-            Logger.withTag(TAG).e(message)
-            message
+        val platformContext = KMAuthInitializer.getKMAuthPlatformContext()
+        context = platformContext?.context
+        webClientId = KMAuthInitializer.getWebClientId(providerId)
+        context?.let {
+            credentialManager = CredentialManager.create(it)
         }
-        require(!KMAuthInitializer.getWebClientId(providerId).isNullOrEmpty()) {
-            val message =
-                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
-            Logger.withTag(TAG).e(message)
-            message
-        }
-
-        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
-        context = kmAuthPlatformContext!!.context
-        credentialManager = CredentialManager.create(context)
-
     }
 
     override suspend fun signIn(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
@@ -59,13 +46,34 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
     }
 
     private fun signInCore(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
+        val currentContext = KMAuthInitializer.getKMAuthPlatformContext()?.context ?: context
+        if (currentContext == null) {
+            val message =
+                "Android context should not be null, Please set it via kmAuthPlatformContext in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
+            Logger.withTag(TAG).e(message)
+            onSignResult(null, IllegalStateException(message))
+            return
+        }
+        val currentWebClientId = KMAuthInitializer.getWebClientId(providerId) ?: webClientId
+        if (currentWebClientId.isNullOrEmpty()) {
+            val message =
+                "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
+            Logger.withTag(TAG).e(message)
+            onSignResult(null, IllegalStateException(message))
+            return
+        }
+
+        context = currentContext
+        webClientId = currentWebClientId
+        val currentCredentialManager = credentialManager ?: CredentialManager.create(currentContext).also { credentialManager = it }
+
         try {
 
             // For popup view, we can use GetSignInWithGoogleOption, Otherwise we can GetGoogleIdOption for bottom sheet
             // set setFilterByAuthorizedAccounts to false, Otherwise it will not show any account first time
             val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(webClientId)
+                .setServerClientId(currentWebClientId)
                 .setAutoSelectEnabled(false)
                 .build()
 
@@ -74,7 +82,7 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
                 if (exception is NoCredentialException) {
                     // User has not signed in yet with any account, show popup Google Sign In
                     val getSignInWithGoogleOption: GetSignInWithGoogleOption =
-                        GetSignInWithGoogleOption.Builder(webClientId)
+                        GetSignInWithGoogleOption.Builder(currentWebClientId)
                             .build()
 
                     val innerExceptionHandler = CoroutineExceptionHandler { _, innerException ->
@@ -86,7 +94,7 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
                     }
                     val scope = CoroutineScope(Dispatchers.IO + innerExceptionHandler)
                     scope.launch {
-                        triggerSignIn(getSignInWithGoogleOption, onSignResult)
+                        triggerSignIn(currentCredentialManager, currentContext, getSignInWithGoogleOption, onSignResult)
                     }
                 } else {
                     exception.printStackTrace()
@@ -98,7 +106,7 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
             val scope = CoroutineScope(Dispatchers.IO + exceptionHandler)
             scope.launch {
                 // if User have signed in with some account, shop one tap bottom sheet
-                triggerSignIn(googleIdOption, onSignResult)
+                triggerSignIn(currentCredentialManager, currentContext, googleIdOption, onSignResult)
             }
 
         } catch (e: Exception) {
@@ -124,6 +132,8 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
     }
 
     private suspend fun triggerSignIn(
+        credManager: CredentialManager,
+        ctx: Context,
         credentialOption: CredentialOption,
         onSignResult: (KMAuthUser?, Throwable?) -> Unit
     ) {
@@ -132,8 +142,8 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
             .build()
 
         // Use an activity-based context to avoid undefined system UI launching behavior.
-        val result: GetCredentialResponse = credentialManager.getCredential(
-            context = context,
+        val result: GetCredentialResponse = credManager.getCredential(
+            context = ctx,
             request = request
         )
         onSignResult(handleSignIn(result), null)
@@ -186,7 +196,11 @@ internal class GoogleAuthManagerAndroid() : GoogleAuthManager {
 
     override suspend fun signOut(userId: String?) {
         try {
-            credentialManager.clearCredentialState(ClearCredentialStateRequest())
+            val currentContext = KMAuthInitializer.getKMAuthPlatformContext()?.context ?: context
+            if (currentContext != null) {
+                val credManager = credentialManager ?: CredentialManager.create(currentContext).also { credentialManager = it }
+                credManager.clearCredentialState(ClearCredentialStateRequest())
+            }
         } catch (e: Exception) {
             Logger.withTag(TAG).e { "Exception in google signOut failed: $e" }
         }

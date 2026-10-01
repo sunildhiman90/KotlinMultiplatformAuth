@@ -4,14 +4,17 @@ import co.touchlab.kermit.Logger
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse
-import com.google.api.client.http.GenericUrl
-import com.google.api.client.http.HttpRequestFactory
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.util.store.FileDataStoreFactory
 import com.sunildhiman90.kmauth.core.KMAuthInitializer
-import kotlinx.serialization.json.Json
 import com.sunildhiman90.kmauth.core.KMAuthUser
+import io.ktor.client.HttpClient as KtorHttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.get
+import io.ktor.client.request.headers
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -28,6 +31,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.awt.Desktop
 import java.io.File
 import java.net.URI
@@ -37,11 +43,28 @@ import java.net.http.HttpResponse
 import java.util.*
 import kotlin.coroutines.resume
 
+@Serializable
+internal data class GoogleOAuthTokenResponse(
+    @SerialName("access_token")
+    val accessToken: String,
+    @SerialName("id_token")
+    val idToken: String? = null,
+    @SerialName("expires_in")
+    val expiresIn: Long? = null,
+    @SerialName("token_type")
+    val tokenType: String? = null,
+    @SerialName("scope")
+    val scope: String? = null,
+    @SerialName("refresh_token")
+    val refreshToken: String? = null
+)
 
 internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
     private var webClientId: String
     private var clientSecret: String
+    private var codeVerifier: String? = null
+    private var ktorClient: KtorHttpClient? = null
     private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? =
         null
 
@@ -64,7 +87,6 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     private var scope = CoroutineScope(Dispatchers.IO)
 
     init {
-
         require(!KMAuthInitializer.getWebClientId(providerId).isNullOrEmpty()) {
             val message =
                 "webClientId should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
@@ -72,11 +94,9 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             message
         }
 
-        webClientId = KMAuthInitializer.getWebClientId(providerId)!!
-
         require(!KMAuthInitializer.getClientSecret(providerId).isNullOrEmpty()) {
             val message =
-                "clientSecret should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
+                "(GoogleAuthManagerJvm) clientSecret should not be null or empty, Please set it in KMAuthInitializer::initialize(KMAuthConfig.forGoogle)"
             Logger.withTag(TAG).e(message)
             message
         }
@@ -105,6 +125,7 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
             launchGoogleSignIn(onSignResult)
 
             continuation.invokeOnCancellation {
+                codeVerifier = null
                 performShutdownCleanup()
             }
         }
@@ -125,32 +146,29 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
 
             routing {
                 get("/callback") {
-                    Logger.d("Received callback: ${call.request.queryParameters}")
+                    Logger.withTag(TAG).d("Received OAuth redirect callback.")
                     // Capture the authorization code from the URL
                     val code = call.request.queryParameters["code"] ?: ""
-                    Logger.d("Received callback code: $code")
 
                     if (code.isNotEmpty()) {
+                        Logger.withTag(TAG).d("Authorization code received, exchanging for tokens.")
                         try {
-
-                            // Exchange the code for an access token
-                            val tokenResponse: GoogleTokenResponse = flow.newTokenRequest(code)
-                                .setRedirectUri(redirectUri)
-                                .execute()
+                            // Exchange the code for an access token via Ktor POST request with PKCE
+                            val tokenResponse = exchangeCodeForToken(code, codeVerifier)
 
                             uniqueUserId = UUID.randomUUID().toString()
-                            val credential =
-                                flow.createAndStoreCredential(tokenResponse, uniqueUserId!!)
+                            val googleTokenResponse = GoogleTokenResponse().apply {
+                                accessToken = tokenResponse.accessToken
+                                idToken = tokenResponse.idToken
+                                expiresInSeconds = tokenResponse.expiresIn
+                                tokenType = tokenResponse.tokenType
+                                scope = tokenResponse.scope
+                                refreshToken = tokenResponse.refreshToken
+                            }
+                            flow.createAndStoreCredential(googleTokenResponse, uniqueUserId!!)
 
                             // Fetch user info
-                            val requestFactory: HttpRequestFactory =
-                                NetHttpTransport().createRequestFactory(credential)
-
-                            val url = GenericUrl("https://www.googleapis.com/oauth2/v2/userinfo")
-                            val request = requestFactory.buildGetRequest(url)
-                            val response = request.execute()
-                            val userInfoString = response.parseAsString()
-                            val userInfo = json.decodeFromString<GoogleUser>(userInfoString)
+                            val userInfo = fetchGoogleUserInfo(tokenResponse.accessToken)
 
                             val callback = onSignResult ?: this@GoogleAuthManagerJvm.onSignResult
                             callback?.invoke(
@@ -198,6 +216,58 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
         return server
     }
 
+    private fun getKtorClient(): KtorHttpClient {
+        return ktorClient ?: KtorHttpClient(CIO) {
+            install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+                json(json)
+            }
+        }.also { ktorClient = it }
+    }
+
+    private suspend fun exchangeCodeForToken(
+        code: String,
+        codeVerifier: String?
+    ): GoogleOAuthTokenResponse {
+        val client = getKtorClient()
+        val response = client.submitForm(
+            url = GOOGLE_TOKEN_URL,
+            formParameters = parameters {
+                append("client_id", webClientId)
+                append("code", code)
+                append("redirect_uri", redirectUri)
+                append("grant_type", "authorization_code")
+                if (!codeVerifier.isNullOrEmpty()) {
+                    append("code_verifier", codeVerifier)
+                }
+                append("client_secret", clientSecret)
+            }
+        )
+
+        val responseBody = response.bodyAsText()
+        if (!response.status.isSuccess()) {
+            Logger.withTag(TAG).e("Token exchange failed with status ${response.status}: $responseBody")
+            throw IllegalStateException("Token exchange failed with status ${response.status}: $responseBody")
+        }
+
+        return json.decodeFromString<GoogleOAuthTokenResponse>(responseBody)
+    }
+
+    private suspend fun fetchGoogleUserInfo(accessToken: String): GoogleUser {
+        val client = getKtorClient()
+        val response = client.get(GOOGLE_USER_INFO_URL) {
+            headers {
+                append(HttpHeaders.Authorization, "Bearer $accessToken")
+                append(HttpHeaders.Accept, "application/json")
+            }
+        }
+        val responseBody = response.bodyAsText()
+        if (!response.status.isSuccess()) {
+            Logger.withTag(TAG).e("Fetching user info failed with status ${response.status}: $responseBody")
+            throw IllegalStateException("Fetching user info failed with status ${response.status}: $responseBody")
+        }
+        return json.decodeFromString<GoogleUser>(responseBody)
+    }
+
     private fun findAvailablePort(startPort: Int): Int {
         var port = startPort
         while (port < startPort + 100) {
@@ -216,10 +286,19 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
                 delay(500) // wait for response to be sent
                 Logger.d("Shutting down server")
                 server?.stop(1000, 1000) // Stop the server gracefully
-
+                codeVerifier = null
+                try {
+                    ktorClient?.close()
+                } catch (_: Exception) {}
+                ktorClient = null
                 scope.cancel()
             } catch (e: Exception) {
                 Logger.e("Error shutting down server: ${e.message}")
+                codeVerifier = null
+                try {
+                    ktorClient?.close()
+                } catch (_: Exception) {}
+                ktorClient = null
                 scope.cancel()  // Ensure scope is cancelled even if there's an error
             }
         }
@@ -230,19 +309,22 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     ) {
 
         try {
-            // We are using google-api-client, alternatively we can use core oauth2 url as well i.e.
-            // https://accounts.google.com/o/oauth2/v2/auth?
-            // scope=email%20profile&
-            // response_type=code&
-            // state=security_token%3D138r5719ru3e1%26url%3Dhttps%3A%2F%2Foauth2.example.com%2Ftoken&
-            // redirect_uri=com.example.app%3A/oauth2redirect&
-            // client_id=client_id
+            clientSecret = KMAuthInitializer.getClientSecret(providerId) ?: clientSecret
+
+            // Generate PKCE code verifier and code challenge
+            val verifier = PkceUtils.generateCodeVerifier()
+            codeVerifier = verifier
+            val codeChallenge = PkceUtils.generateCodeChallenge(verifier)
 
             val flow = initializeGoogleAuthCodeFlow()
 
             actualPort = getPort()
             Logger.d("Using Redirect URI: $redirectUri")
-            val authorizationUrl = flow.newAuthorizationUrl().setRedirectUri(redirectUri).build()
+            val authorizationUrl = flow.newAuthorizationUrl()
+                .setRedirectUri(redirectUri)
+                .set("code_challenge", codeChallenge)
+                .set("code_challenge_method", "S256")
+                .build()
             Logger.d("Opening Authorization URL: $authorizationUrl")
 
             // Open the user's default web browser to authenticate
@@ -344,6 +426,8 @@ internal class GoogleAuthManagerJvm : GoogleAuthManager {
     companion object {
         private const val TAG = "GoogleAuthManagerJvm"
         private const val DEFAULT_PORT = 8080
+        private const val GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+        private const val GOOGLE_USER_INFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
         private val json = Json { ignoreUnknownKeys = true }
     }
 }

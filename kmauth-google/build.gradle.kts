@@ -21,7 +21,11 @@ kotlin {
         }
     }
 
-    jvm()
+    jvm {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
     android {
         namespace = "com.sunildhiman90.kmauth.google"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -44,7 +48,7 @@ kotlin {
     ).forEach {}
 
     cocoapods {
-        ios.deploymentTarget = "13.0"
+        ios.deploymentTarget = "15.0"
 
         framework {
             // Required properties
@@ -107,6 +111,7 @@ kotlin {
             implementation(libs.ktor.server.core)
             implementation(libs.ktor.server.netty)
             implementation(libs.ktor.server.content.negotiation)
+            implementation(libs.ktor.client.cio)
         }
 
         wasmJsMain.dependencies {
@@ -117,6 +122,25 @@ kotlin {
             dependencies {
                 implementation(libs.kotlin.test)
             }
+        }
+    }
+}
+
+// Workaround for Xcode 16/27+ dropping support for iOS deployment targets < 15.0 (KT-57741 raised to 12.0 only)
+tasks.matching { it.name == "podGenIos" }.configureEach {
+    doLast {
+        val podfile = layout.buildDirectory.file("cocoapods/synthetic/ios/Podfile").get().asFile
+        if (podfile.exists()) {
+            val content = podfile.readText()
+            val updated = content
+                .replace(
+                    "config.build_settings['CODE_SIGNING_ALLOWED'] = \"NO\"",
+                    "config.build_settings['CODE_SIGNING_ALLOWED'] = \"NO\"\n      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'"
+                )
+                .replace("#{12}.#{0}", "#{15}.#{0}")
+                .replace("< 12", "< 15")
+                .replace("== 12", "== 15")
+            podfile.writeText(updated)
         }
     }
 }

@@ -19,7 +19,11 @@ kotlin {
         }
     }
 
-    jvm()
+    jvm {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
     android {
         namespace = "com.sunildhiman90.kmauth.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()

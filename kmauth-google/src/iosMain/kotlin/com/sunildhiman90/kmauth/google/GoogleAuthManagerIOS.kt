@@ -20,11 +20,15 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
     }
 
     private fun signInCore(onSignResult: (KMAuthUser?, Throwable?) -> Unit) {
-        try {
-            val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
-            requireNotNull(rootViewController) { "Root view controller is null" }
+        val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
+        if (rootViewController == null) {
+            val message = "Root view controller is null"
+            Logger.withTag(TAG).e { message }
+            onSignResult(null, IllegalStateException(message))
+            return
+        }
 
-            var kmAuthUser: KMAuthUser? = null
+        try {
             GIDSignIn.sharedInstance.signInWithPresentingViewController(
                 presentingViewController = rootViewController
             ) { result, error ->
@@ -41,8 +45,8 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
                 val userId = user?.userID
                 val idToken = user?.idToken
                 val accessToken = user?.accessToken
-                userId?.let {
-                    kmAuthUser = KMAuthUser(
+                if (userId != null) {
+                    val kmAuthUser = KMAuthUser(
                         id = userId,
                         idToken = idToken?.tokenString,
                         accessToken = accessToken?.tokenString,
@@ -52,11 +56,14 @@ internal class GoogleAuthManagerIOS : GoogleAuthManager {
                             ?.absoluteString()
                     )
                     onSignResult(kmAuthUser, null)
+                } else {
+                    onSignResult(null, IllegalStateException("Google sign-in succeeded but user ID is missing"))
                 }
 
             }
         } catch (e: Exception) {
             Logger.withTag(TAG).e { "Exception in google signIn: $e" }
+            onSignResult(null, e)
         }
     }
 

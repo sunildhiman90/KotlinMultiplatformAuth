@@ -335,8 +335,7 @@ And then setup webClientId in common code for all platforms(App composable).
 ```
 
 If you use KMAuthInitializer.initialize from common code, then you dont need to initialize the KMAuthInitializer in each
-platform except Android and JVM. You just need to call initContext in Android and need to call
-initClientSecret in desktop/jvm source set.
+platform except Android (for context) and Desktop (where `clientSecret` from a Google "Desktop app" client must be provided).
 
 #### iOS
 
@@ -382,20 +381,37 @@ YOUR_REVERSED_CLIENT_ID from additional information section.
 ld: warning: Could not find or use auto-linked framework 'GoogleSignIn': framework 'GoogleSignIn' not found``
 #### Desktop
 
-1. On Desktop/Jvm platform, you need to call the KMAuthInitializer.initClientSecret method with
-clientSecret which you can get from web client id.
-IF you go to the web client id detail and check additional information, It will show you client
-secret there.
-Make sure to call this method before calling App composable in main.kt in desktopMain source set.
+Desktop (JVM) supports Google Sign-In with **PKCE (Proof Key for Code Exchange)** for enhanced security.
 
+> [!IMPORTANT]
+> **Use a "Desktop app" Client ID (Do NOT use a "Web application" Client ID):**
+> 1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an OAuth Client ID with Application type set to **Desktop app**.
+> 2. **Never use a Web application Client ID & Secret on Desktop**: A Web application secret is confidential and meant only for secure backend servers. Bundling a Web client secret in a distributed desktop app compromises your backend credentials.
+> 3. **Why Desktop app client credentials are safe**: Google explicitly treats the Desktop app `client_secret` as a public application identifier rather than a confidential secret (see [Google OAuth 2.0 Installed Applications](https://developers.google.com/identity/protocols/oauth2#installed) and [OAuth 2.0 for Mobile & Desktop Apps](https://developers.google.com/identity/protocols/oauth2/native-app)).
+> 4. **PKCE Security**: Our library automatically generates a cryptographically random, one-time `code_verifier` with SHA-256 `code_challenge` (PKCE RFC 7636) for every sign-in attempt. Even if someone intercepts the desktop client ID or secret, they cannot hijack the authorization code without the in-memory PKCE verifier.
+
+**Configuration:**
+Pass your Desktop `webClientId` and `clientSecret`:
 ```kotlin
-KMAuthInitializer.initClientSecret(
-    clientSecret = OAUTH_CLIENT_SECRET,
+KMAuthInitializer.initialize(
+    KMAuthConfig.forGoogle(
+        webClientId = "YOUR_DESKTOP_CLIENT_ID.apps.googleusercontent.com",
+        clientSecret = "YOUR_DESKTOP_CLIENT_SECRET",
+        googleClientRedirectHost = "localhost:8080", // Optional: Defaults to "localhost:8080"
+        googleClientRedirectScheme = "http"          // Optional: Defaults to "http"
+    )
 )
 ```
-Alternatively, you can setup clientSecret in KMAuthInitializer.initialize method itself from app composable. Then you dont need to set it here.
-2. **Authorized redirect URIs**: You must add your loopback URI to the Google Cloud Console's **Authorized redirect URIs** section (e.g., `http://localhost:8080/callback`).
-    *   **IMPORTANT**: The port you set in your `KMAuthConfig` (default is 8080) must match exactly with what you have added in the Google Console.
+Or via the helper method:
+```kotlin
+KMAuthInitializer.initClientSecret(
+    clientSecret = "YOUR_DESKTOP_CLIENT_SECRET",
+)
+```
+
+**Authorized redirect URIs**: 
+You must add your loopback URI to the Google Cloud Console's **Authorized redirect URIs** section of your Desktop OAuth client (e.g., `http://localhost:8080/callback`).
+* **IMPORTANT**: The port you set in your `KMAuthConfig` (default is 8080) must match exactly with what you have added in the Google Console.
 
 #### Web (Kotlin/Js and Kotlin/Wasm)
 

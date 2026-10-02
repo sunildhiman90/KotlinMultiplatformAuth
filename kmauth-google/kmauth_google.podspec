@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'kmauth_google'
-    spec.version                  = '0.3.8'
+    spec.version                  = '0.4.0'
     spec.homepage                 = ''
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
@@ -8,7 +8,7 @@ Pod::Spec.new do |spec|
     spec.summary                  = ''
     spec.vendored_frameworks      = 'build/cocoapods/framework/kmauth_google.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '13.0'
+    spec.ios.deployment_target    = '15.0'
     spec.dependency 'GoogleSignIn'
     if !Dir.exist?('build/cocoapods/framework/kmauth_google.framework') || Dir.empty?('build/cocoapods/framework/kmauth_google.framework')
         raise "
